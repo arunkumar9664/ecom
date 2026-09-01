@@ -1,0 +1,11 @@
+# Netlify — build & serve the React frontend only
+[build]
+  base = "shudh-desi-ghee/frontend"
+  command = "npm run build"
+  publish = "dist"
+
+# SPA routing — all paths serve index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
