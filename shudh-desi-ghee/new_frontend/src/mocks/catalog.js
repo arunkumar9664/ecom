@@ -289,23 +289,105 @@ export const mockProducts = [
   }),
 ];
 
-const pagination = {
-  total: mockProducts.length,
-  page: 1,
-  limit: 50,
-  totalPages: 1,
+mockProducts.forEach((item, index) => {
+  item.createdAt = new Date(Date.UTC(2026, 5, 20 - index)).toISOString();
+});
+
+const neem = mockProducts.find((item) => item.id === 'soap-neem');
+const linen = mockProducts.find((item) => item.id === 'linen-sheet');
+const pouch = mockProducts.find((item) => item.id === 'bag-pouch');
+if (neem) {
+  neem.secondaryImage = img.honey2;
+  neem.averageRating = 4.7;
+  neem.reviewCount = 6;
+}
+if (linen) {
+  linen.secondaryImage = img.atta2;
+  linen.averageRating = 4.5;
+  linen.reviewCount = 4;
+}
+if (pouch) pouch.isSoldOut = true;
+
+const mockReviewsByProduct = {
+  'soap-neem': [
+    { id: 'r1', rating: 5, comment: 'Firm, and it lasts through a damp week by the sink.', user: { name: 'Meera' }, createdAt: '2026-08-02T00:00:00.000Z' },
+    { id: 'r2', rating: 5, comment: 'The turmeric note is quiet. Skin feels clean, not stripped.', user: { name: 'Arjun' }, createdAt: '2026-07-18T00:00:00.000Z' },
+    { id: 'r3', rating: 4, comment: 'A little soft if the dish stays wet. Still the bar I repurchase.', user: { name: 'Leela' }, createdAt: '2026-06-30T00:00:00.000Z' },
+    { id: 'r4', rating: 5, comment: 'Lemongrass is bright without smelling like a cleaner.', user: { name: 'Kabir' }, createdAt: '2026-06-12T00:00:00.000Z' },
+    { id: 'r5', rating: 4, comment: 'Cured hard, which I wanted. Lather is modest.', user: { name: 'Nisha' }, createdAt: '2026-05-20T00:00:00.000Z' },
+    { id: 'r6', rating: 5, comment: 'Used the unscented bar for weeks. No perfume left on towels.', user: { name: 'Dev' }, createdAt: '2026-05-02T00:00:00.000Z' },
+  ],
+  'linen-sheet': [
+    { id: 'r7', rating: 5, comment: 'Stiff on night one, soft by the weekend.', user: { name: 'Anika' }, createdAt: '2026-08-11T00:00:00.000Z' },
+    { id: 'r8', rating: 4, comment: 'Sage is a true grey-green. Hem is even.', user: { name: 'Rohit' }, createdAt: '2026-07-01T00:00:00.000Z' },
+    { id: 'r9', rating: 5, comment: 'Cool in the heat. I stopped using a top sheet.', user: { name: 'Sara' }, createdAt: '2026-06-08T00:00:00.000Z' },
+    { id: 'r10', rating: 4, comment: 'Washed cold as asked. No pilling after a month.', user: { name: 'Imran' }, createdAt: '2026-05-15T00:00:00.000Z' },
+  ],
 };
+
+function filteredMockProducts(params) {
+  let list = [...mockProducts];
+  const categorySlug = params.get('categorySlug');
+  const search = (params.get('search') || '').trim().toLowerCase();
+  const minPrice = params.get('minPrice');
+  const maxPrice = params.get('maxPrice');
+  const size = params.get('size');
+  if (categorySlug && categorySlug !== 'all') list = list.filter((item) => item.categorySlug === categorySlug);
+  if (minPrice) list = list.filter((item) => item.price >= Number(minPrice));
+  if (maxPrice) list = list.filter((item) => item.price <= Number(maxPrice));
+  if (size) list = list.filter((item) => (item.sizes || []).includes(size));
+  if (search) {
+    list = list.filter((item) => [item.name, item.description, item.fabric]
+      .some((value) => String(value || '').toLowerCase().includes(search)));
+  }
+  list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const page = Math.max(1, Number(params.get('page') || 1));
+  const limit = Math.max(1, Number(params.get('limit') || 50));
+  const total = list.length;
+  return {
+    products: list.slice((page - 1) * limit, page * limit),
+    pagination: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) },
+  };
+}
+
+function mockReviewPage(productId, params) {
+  const all = mockReviewsByProduct[productId] || [];
+  const page = Math.max(1, Number(params.get('page') || 1));
+  const limit = Math.max(1, Number(params.get('limit') || 10));
+  const total = all.length;
+  return {
+    reviews: all.slice((page - 1) * limit, page * limit),
+    userReview: null,
+    canReview: false,
+    pagination: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit) || 1) },
+  };
+}
 
 /** Same envelopes as the live API, so the shop context can apply them unchanged. */
 export function mockGet(path) {
-  const url = String(path);
+  const [pathname, query = ''] = String(path).split('?');
+  const params = new URLSearchParams(query);
+  const reviews = pathname.match(/^\/products\/([^/]+)\/reviews$/);
+  if (reviews) {
+    return Promise.resolve({ data: { success: true, message: 'Mock', ...mockReviewPage(reviews[1], params) } });
+  }
+  const one = pathname.match(/^\/products\/([^/]+)$/);
+  if (one) {
+    const product = mockProducts.find((item) => item.id === one[1]);
+    if (!product) {
+      const error = new Error('Product not found');
+      error.response = { status: 404, data: { message: 'Product not found' } };
+      return Promise.reject(error);
+    }
+    return Promise.resolve({ data: { success: true, message: 'Mock', product } });
+  }
   let data;
-  if (url.startsWith('/products')) data = { products: mockProducts, pagination };
-  else if (url.startsWith('/categories')) data = { categories: mockCategories };
-  else if (url.startsWith('/hero-slides')) data = { heroSlides: mockHeroSlides };
-  else if (url.startsWith('/promo-messages')) data = { promoMessages: mockPromoMessages };
-  else if (url.startsWith('/store-settings')) data = { settings: mockSettings };
-  else if (url.startsWith('/coupons')) data = { discounts: mockDiscounts };
+  if (pathname === '/products') data = filteredMockProducts(params);
+  else if (pathname.startsWith('/categories')) data = { categories: mockCategories };
+  else if (pathname.startsWith('/hero-slides')) data = { heroSlides: mockHeroSlides };
+  else if (pathname.startsWith('/promo-messages')) data = { promoMessages: mockPromoMessages };
+  else if (pathname.startsWith('/store-settings')) data = { settings: mockSettings };
+  else if (pathname.startsWith('/coupons')) data = { discounts: mockDiscounts };
   else data = {};
   return Promise.resolve({ data: { success: true, message: 'Mock', ...data } });
 }

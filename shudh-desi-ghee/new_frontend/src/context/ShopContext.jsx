@@ -359,7 +359,7 @@ export const ShopProvider = ({ children }) => {
       });
       setIsCartOpen(true);
       toast.success('Added to bag');
-      return;
+      return true;
     }
 
     try {
@@ -372,8 +372,10 @@ export const ShopProvider = ({ children }) => {
       await fetchUserCartAndWishlist();
       setIsCartOpen(true);
       toast.success('Added to bag');
+      return true;
     } catch (err) {
       toast.error(errorMessage(err, 'Could not add this to your bag'));
+      return false;
     }
   };
 
@@ -532,13 +534,43 @@ export const ShopProvider = ({ children }) => {
     }
   };
 
-  const fetchProductReviews = async (productId, page = 1) => {
-    if (useMockData) return { reviews: [], pagination: { total: 0, page, limit: 10, totalPages: 1 }, canReview: false };
-    if (offlineDemo) {
+  const catalogGet = useCallback((path) => {
+    if (useMockData) return mockGet(path);
+    if (offlineDemo) return Promise.reject(new Error('Offline demo is on. Live catalog is not loaded.'));
+    return api.get(path);
+  }, []);
+
+  const queryProducts = useCallback(async (params = {}) => {
+    const search = new URLSearchParams();
+    search.set('limit', '100');
+    search.set('page', '1');
+    ['categorySlug', 'search', 'minPrice', 'maxPrice', 'size'].forEach((key) => {
+      if (params[key]) search.set(key, params[key]);
+    });
+    try {
+      const res = await catalogGet(`/products?${search.toString()}`);
+      return { products: res.data?.products || [], pagination: res.data?.pagination || null, error: null };
+    } catch (err) {
+      return { products: [], pagination: null, error: errorMessage(err, 'Could not load products') };
+    }
+  }, [catalogGet]);
+
+  const fetchProduct = useCallback(async (id) => {
+    try {
+      const res = await catalogGet(`/products/${id}`);
+      return { product: res.data?.product || null, missing: !res.data?.product, error: null };
+    } catch (err) {
+      if (err?.response?.status === 404) return { product: null, missing: true, error: null };
+      return { product: null, missing: false, error: errorMessage(err, 'Could not load this product') };
+    }
+  }, [catalogGet]);
+
+  const fetchProductReviews = async (productId, page = 1, limit = 4) => {
+    if (!useMockData && offlineDemo) {
       return { reviews: [], error: 'Offline demo is on. Reviews are not loaded.' };
     }
     try {
-      const res = await api.get(`/products/${productId}/reviews?page=${page}`);
+      const res = await catalogGet(`/products/${productId}/reviews?page=${page}&limit=${limit}`);
       return res.data;
     } catch (err) {
       return { reviews: [], error: errorMessage(err, 'Could not load reviews') };
@@ -658,6 +690,8 @@ export const ShopProvider = ({ children }) => {
         searchQuery,
         setSearchQuery,
         validateCoupon,
+        queryProducts,
+        fetchProduct,
         submitProductReview,
         fetchProductReviews,
         addOrder,

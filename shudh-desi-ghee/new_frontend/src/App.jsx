@@ -5,6 +5,8 @@ import { ShopProvider, useShop } from './context/ShopContext';
 import { googleClientId, MOCK_DISABLED_MESSAGE } from './config/brand';
 import StoreShell from './components/shell/StoreShell';
 import HomePage from './pages/HomePage';
+import ListingPage from './pages/ListingPage';
+import ProductPage from './pages/ProductPage';
 import StubPage from './pages/StubPage';
 import CheckoutPage from './pages/CheckoutPage';
 
@@ -23,9 +25,9 @@ function AppRoutes() {
     <StoreShell>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/shop" element={<StubPage title="Shop" note="Listing, sort, and filters arrive in Phase 4." />} />
-        <Route path="/category/:slug" element={<StubPage title="Category" note="This route only opens for a slug returned by the catalog." />} />
-        <Route path="/product/:id" element={<StubPage title="Product" note="Gallery, variants, and reviews arrive in Phase 4." />} />
+        <Route path="/shop" element={<ListingPage />} />
+        <Route path="/category/:slug" element={<ListingPage />} />
+        <Route path="/product/:id" element={<ProductPage />} />
         <Route path="/cart" element={<StubPage title="Bag" note="Guests keep this bag in the browser. Signed-in customers use the server cart." />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/login" element={<LoginPage />} />

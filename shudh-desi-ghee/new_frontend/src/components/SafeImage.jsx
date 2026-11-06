@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getImageUrl } from '../utils/image';
 
-export default function SafeImage({ src, alt = '', className = '' }) {
+export default function SafeImage({ src, alt = '', className = '', style }) {
   const resolved = getImageUrl(src);
   const [failed, setFailed] = useState(!resolved);
 
@@ -30,6 +30,7 @@ export default function SafeImage({ src, alt = '', className = '' }) {
       src={resolved}
       alt={alt}
       className={className}
+      style={style}
       onError={() => setFailed(true)}
     />
   );
