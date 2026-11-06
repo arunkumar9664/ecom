@@ -668,6 +668,9 @@ export const ShopProvider = ({ children }) => {
         loginWithGoogle,
         logoutUser,
         fetchUserOrders,
+        replaceUser: (user) => {
+          if (user) setCurrentUser(user);
+        },
 
         cart,
         addToCart,

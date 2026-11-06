@@ -1,10 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useShop } from '../../context/ShopContext';
 
+function isGenericShipping(message) {
+  return /free (shipping|dispatch|delivery)/i.test(message) && !/₹|\brs\.?\s*\d/i.test(message);
+}
+
 export default function AnnouncementBar() {
-  const { promoMessages, sections } = useShop();
+  const { promoMessages, sections, storeSettings } = useShop();
   const [index, setIndex] = useState(0);
-  const messages = promoMessages.filter(Boolean);
+  const threshold = Number(storeSettings?.freeShippingThreshold);
+  const shippingKnown = sections.settings.status === 'ready' && Number.isFinite(threshold) && threshold > 0;
+  const shippingLine = shippingKnown
+    ? `Free shipping on orders above ₹${threshold.toLocaleString('en-IN')}`
+    : null;
+  const messages = promoMessages.filter(Boolean).flatMap((message) => {
+    if (!isGenericShipping(message)) return [message];
+    return shippingLine ? [shippingLine] : [];
+  });
 
   useEffect(() => {
     setIndex(0);

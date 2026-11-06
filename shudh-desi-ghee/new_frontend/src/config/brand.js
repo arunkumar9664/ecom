@@ -6,6 +6,7 @@ export const brand = {
   name: 'Field & Hearth',
   tagline: 'Handmade soaps, candles, linen, bags, and alcohol-free attars.',
   welcomeCode: 'HEARTH10',
+  origin: { label: 'Made by hand', value: 'India' },
   guestCheckoutNote:
     'Guests receive an email confirmation. A guest order cannot be tracked later. Sign in if you want the order saved to an account.',
 };
@@ -32,3 +33,4 @@ export const offlineDemo = import.meta.env.VITE_OFFLINE_DEMO === 'true';
 export const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
 export const MOCK_DISABLED_MESSAGE = 'Mock mode: orders are not placed.';
+export const MOCK_SIGNIN_MESSAGE = 'Mock mode: sign-in is disabled.';

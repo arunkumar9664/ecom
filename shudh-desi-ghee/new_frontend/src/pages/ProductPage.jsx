@@ -48,6 +48,7 @@ export default function ProductPage() {
   const [related, setRelated] = useState([]);
   const [showBar, setShowBar] = useState(false);
   const [openPanels, setOpenPanels] = useState({ description: true });
+  const [descOpen, setDescOpen] = useState(false);
   const addRef = useRef(null);
 
   useEffect(() => {
@@ -123,9 +124,6 @@ export default function ProductPage() {
   const choices = product ? variantChoices(product) : { colors: [], sizes: [] };
   const images = useMemo(() => (product ? galleryImages(product, colorName) : []), [product, colorName]);
   const saved = product ? isInWishlist(product.id) : false;
-  const savings = product?.originalPrice && product.originalPrice > product.price
-    ? Math.round((1 - product.price / product.originalPrice) * 100)
-    : 0;
 
   const shippingLine = sections.settings.status === 'ready' && storeSettings
     ? `Dispatch is ₹${Number(storeSettings.shippingFee || 0).toLocaleString('en-IN')} and free once the order reaches ₹${Number(storeSettings.freeShippingThreshold || 0).toLocaleString('en-IN')}.`
@@ -204,39 +202,29 @@ export default function ProductPage() {
 
   return (
     <main className="pb-24 md:pb-0">
-      <nav aria-label="Breadcrumb" className="mx-auto max-w-6xl px-4 pt-6 font-body text-xs tracking-[0.08em] text-muted uppercase md:px-8">
-        <Link to="/" className="hover:text-ink">Home</Link>
-        <span aria-hidden="true"> / </span>
+      <nav aria-label="Breadcrumb" className="mx-auto flex max-w-[1360px] items-center gap-2 px-4 pt-4 font-body text-[11px] font-medium tracking-[0.12em] text-muted uppercase md:px-8">
+        <Link to="/" className="shrink-0 hover:text-ink">Home</Link>
+        <span aria-hidden="true">&gt;</span>
         {product.categorySlug ? (
-          <Link to={`/category/${product.categorySlug}`} className="hover:text-ink">{product.category || 'Category'}</Link>
+          <Link to={`/category/${product.categorySlug}`} className="shrink-0 hover:text-ink">{product.category || 'Category'}</Link>
         ) : (
-          <Link to="/shop" className="hover:text-ink">Shop</Link>
+          <Link to="/shop" className="shrink-0 hover:text-ink">Shop</Link>
         )}
-        <span aria-hidden="true"> / </span>
-        <span className="text-ink">{product.name}</span>
+        <span aria-hidden="true">&gt;</span>
+        <span className="truncate text-ink">{product.name}</span>
       </nav>
 
-      <div className="mx-auto grid max-w-6xl items-start gap-8 px-4 py-8 md:grid-cols-2 md:px-8">
-        <ProductGallery images={images} name={product.name} />
-        <div>
+      <div className="mx-auto grid max-w-[1360px] items-start gap-6 px-4 py-6 lg:grid-cols-[minmax(0,55%)_minmax(0,45%)] lg:px-8">
+        <ProductGallery images={images} name={product.name} saved={saved} onWishlist={() => toggleWishlist(product.id)} />
+        <div className="bg-white px-6 py-8 md:px-12 lg:px-16">
           {product.badge ? (
-            <p className="font-body text-xs tracking-[0.16em] text-terracotta uppercase">{product.badge}</p>
+            <p className="font-body text-[11px] font-bold tracking-[0.14em] text-ink uppercase">{product.badge}</p>
           ) : null}
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="font-heading text-4xl text-ink md:text-5xl">{product.name}</h1>
-            <button
-              type="button"
-              aria-pressed={saved}
-              aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
-              onClick={() => toggleWishlist(product.id)}
-              className="mt-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                <path d="M12 19s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z" />
-              </svg>
-            </button>
-          </div>
-          <p className="mt-3 font-body text-sm text-muted">
+          <h1 className="font-heading text-[clamp(28px,2.6vw,40px)] leading-[1.5] font-normal text-ink">{product.name}</h1>
+          {product.description ? (
+            <p className="mt-1 truncate font-body text-sm font-medium text-ink">{product.description}</p>
+          ) : null}
+          <p className="mt-4 font-body text-sm text-muted">
             {product.reviewCount > 0 ? (
               <>
                 <Stars value={product.averageRating} />
@@ -245,19 +233,29 @@ export default function ProductPage() {
               </>
             ) : 'No reviews yet'}
           </p>
-          <p className="mt-4 font-body text-lg font-bold text-ink">
-            {formatRupee(product.price)}
-            {savings ? (
-              <>
-                <span className="ml-2 font-normal text-muted line-through">{formatRupee(product.originalPrice)}</span>
-                <span className="ml-2 font-normal text-terracotta">Save {savings}%</span>
-              </>
-            ) : null}
+          <p className="mt-4 font-body text-sm text-ink">
+            <span className="font-bold">{brand.origin.label}</span>
+            <span className="ml-2">{brand.origin.value}</span>
           </p>
-          {product.description ? <p className="mt-4 font-body text-sm leading-relaxed text-muted">{product.description}</p> : null}
+          {product.description ? (
+            <div className="mt-4">
+              <p className={`font-body text-sm leading-relaxed text-muted ${descOpen ? '' : 'line-clamp-3'}`}>{product.description}</p>
+              <button type="button" onClick={() => setDescOpen((value) => !value)} className="mt-1 font-body text-sm text-ink underline">
+                {descOpen ? 'Show less' : 'Read More'}
+              </button>
+            </div>
+          ) : null}
+          <p className="mt-5 font-body text-sm text-ink">
+            <span className="font-bold">MRP</span>
+            {product.originalPrice && product.originalPrice > product.price ? (
+              <span className="ml-2 text-muted line-through">{formatRupee(product.originalPrice)}</span>
+            ) : null}
+            <span className="ml-2 font-bold">{formatRupee(product.price)}</span>
+            <span className="ml-2 text-xs text-muted">(incl. of all taxes)</span>
+          </p>
 
           <fieldset className="mt-6">
-            <legend className="font-body text-xs tracking-[0.16em] text-muted uppercase">{labels.variant}</legend>
+            <legend className="font-body text-sm font-bold text-ink">{labels.variant}</legend>
             <div className="mt-3 flex flex-wrap gap-2">
               {choices.colors.map((color) => (
                 <button
@@ -278,7 +276,7 @@ export default function ProductPage() {
           </fieldset>
 
           <fieldset className="mt-6">
-            <legend className="font-body text-xs tracking-[0.16em] text-muted uppercase">{labels.size}</legend>
+            <legend className="font-body text-sm font-bold text-ink">{labels.size}</legend>
             <p className="mt-1 font-body text-xs text-muted">The price does not change by size.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {choices.sizes.map((entry) => (
@@ -298,12 +296,12 @@ export default function ProductPage() {
             </div>
           </fieldset>
 
-          <div className="mt-6">
-            <p className="font-body text-xs tracking-[0.16em] text-muted uppercase">Quantity</p>
-            <div className="mt-2 inline-flex border border-line">
-              <button type="button" aria-label="Decrease quantity" className="h-11 w-11" onClick={() => setQuantity((value) => Math.max(1, value - 1))}>−</button>
+          <div className="mt-6 flex items-center gap-4">
+            <p className="font-body text-sm font-bold text-ink">Quantity</p>
+            <div className="inline-flex border border-line">
+              <button type="button" aria-label="Decrease quantity" className="h-11 w-11 font-bold" onClick={() => setQuantity((value) => Math.max(1, value - 1))}>−</button>
               <span className="flex h-11 w-12 items-center justify-center font-body text-sm" aria-live="polite">{quantity}</span>
-              <button type="button" aria-label="Increase quantity" className="h-11 w-11" onClick={() => setQuantity((value) => Math.min(10, value + 1))}>+</button>
+              <button type="button" aria-label="Increase quantity" className="h-11 w-11 font-bold" onClick={() => setQuantity((value) => Math.min(10, value + 1))}>+</button>
             </div>
           </div>
 

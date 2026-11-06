@@ -1,22 +1,34 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from 'react-hot-toast';
 import { ShopProvider, useShop } from './context/ShopContext';
-import { googleClientId, MOCK_DISABLED_MESSAGE } from './config/brand';
+import { googleClientId } from './config/brand';
 import StoreShell from './components/shell/StoreShell';
 import HomePage from './pages/HomePage';
 import ListingPage from './pages/ListingPage';
 import ProductPage from './pages/ProductPage';
 import StubPage from './pages/StubPage';
 import CheckoutPage from './pages/CheckoutPage';
+import CartPage from './pages/CartPage';
+import AccountPage from './pages/AccountPage';
+import WishlistPage from './pages/WishlistPage';
+import TrackOrderPage from './pages/TrackOrderPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import AuthForm from './components/auth/AuthForm';
+import {
+  AboutPage, StoryPage, ContactPage, DeliveryPage, PrivacyPage, TermsPage, RefundPage, FaqPage, JournalPage, NotFoundPage,
+} from './pages/StaticPages';
 
-function LoginPage() {
-  const { useMockData } = useShop();
+function LoginPage({ tab = 'login' }) {
+  const { currentUser } = useShop();
+  if (currentUser) return <Navigate to="/account" replace />;
   return (
-    <StubPage
-      title="Sign in"
-      note={useMockData ? MOCK_DISABLED_MESSAGE : 'Email and Google sign-in arrive in Phase 5.'}
-    />
+    <main className="mx-auto max-w-md px-4 py-12">
+      <h1 className="font-heading text-4xl text-ink">{tab === 'register' ? 'Register' : 'Sign in'}</h1>
+      <div className="mt-6 bg-white p-6">
+        <AuthForm initialTab={tab} />
+      </div>
+    </main>
   );
 }
 
@@ -28,28 +40,33 @@ function AppRoutes() {
         <Route path="/shop" element={<ListingPage />} />
         <Route path="/category/:slug" element={<ListingPage />} />
         <Route path="/product/:id" element={<ProductPage />} />
-        <Route path="/cart" element={<StubPage title="Bag" note="Guests keep this bag in the browser. Signed-in customers use the server cart." />} />
+        <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/reset-password" element={<StubPage title="Reset password" note="Uses POST /auth/reset-password." />} />
-        <Route path="/account" element={<StubPage title="Account" note="Profile, addresses, and orders arrive in Phase 5." />} />
-        <Route path="/orders" element={<StubPage title="Orders" note="Requires a signed-in customer. Guest orders are not listed here." />} />
-        <Route path="/wishlist" element={<StubPage title="Wishlist" note="Guests save locally. Signed-in customers use the server wishlist." />} />
-        <Route path="/track-order" element={<StubPage title="Track an order" note="Sign in to see orders on your account. Guest orders cannot be looked up later." />} />
-        <Route path="/about" element={<StubPage title="About" />} />
-        <Route path="/about-us" element={<StubPage title="About" />} />
-        <Route path="/our-story" element={<StubPage title="Our story" />} />
-        <Route path="/contact" element={<StubPage title="Contact" />} />
-        <Route path="/contact-us" element={<StubPage title="Contact" />} />
-        <Route path="/about-contact" element={<StubPage title="Visit" />} />
-        <Route path="/privacy-policy" element={<StubPage title="Privacy" />} />
-        <Route path="/refund-exchange-policy" element={<StubPage title="Returns" />} />
-        <Route path="/refund-policy" element={<StubPage title="Returns" />} />
-        <Route path="/disclaimer" element={<StubPage title="Disclaimer" />} />
-        <Route path="/lab-reports" element={<StubPage title="Notes on the work" note="Static page. There is no lab-report endpoint." />} />
-        <Route path="/journal" element={<StubPage title="Journal" note="Static page. There is no blog endpoint." />} />
+        <Route path="/register" element={<LoginPage tab="register" />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/account" element={<AccountPage />} />
+        <Route path="/orders" element={<AccountPage initialTab="orders" />} />
+        <Route path="/orders/:id" element={<AccountPage initialTab="orders" />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/track-order" element={<TrackOrderPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/about-us" element={<AboutPage />} />
+        <Route path="/our-story" element={<StoryPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/contact-us" element={<ContactPage />} />
+        <Route path="/about-contact" element={<ContactPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/refund-exchange-policy" element={<RefundPage />} />
+        <Route path="/refund-policy" element={<DeliveryPage />} />
+        <Route path="/delivery" element={<DeliveryPage />} />
+        <Route path="/faqs" element={<FaqPage />} />
+        <Route path="/disclaimer" element={<FaqPage />} />
+        <Route path="/journal" element={<JournalPage />} />
+        <Route path="/lab-reports" element={<StubPage title="Notes on the work" note="Lab reports are not part of this phase." />} />
         <Route path="/admin" element={<StubPage title="Admin" note="The existing admin screen is copied here in the last phase, without a restyle." />} />
-        <Route path="*" element={<StubPage title="Page not found" />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </StoreShell>
   );

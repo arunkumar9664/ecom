@@ -11,6 +11,7 @@ import FloatingActions from './FloatingActions';
 import MiniCartBar from './MiniCartBar';
 import WelcomePopup from './WelcomePopup';
 import MockBadge from './MockBadge';
+import AuthModal from '../auth/AuthModal';
 
 export default function StoreShell({ children }) {
   const { pathname } = useLocation();
@@ -68,6 +69,7 @@ export default function StoreShell({ children }) {
       <FloatingActions />
       <MiniCartBar />
       <WelcomePopup />
+      <AuthModal />
     </div>
   );
 }

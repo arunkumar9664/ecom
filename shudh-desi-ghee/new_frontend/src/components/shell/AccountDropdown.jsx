@@ -1,21 +1,20 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useShop } from '../../context/ShopContext';
-import { MOCK_DISABLED_MESSAGE, brand } from '../../config/brand';
+import { MOCK_SIGNIN_MESSAGE, brand } from '../../config/brand';
 import { IconBag, IconHeart, IconOut, IconTruck, IconUser } from './icons';
 
 export default function AccountDropdown({ open, onClose }) {
-  const { currentUser, useMockData, logoutUser } = useShop();
-  const navigate = useNavigate();
+  const { currentUser, useMockData, logoutUser, openAuthModal } = useShop();
   if (!open) return null;
 
   const goAuth = (tab) => {
     onClose();
     if (useMockData) {
-      toast.error(MOCK_DISABLED_MESSAGE);
+      toast.error(MOCK_SIGNIN_MESSAGE);
       return;
     }
-    navigate(tab === 'register' ? '/login?tab=register' : '/login');
+    openAuthModal(tab);
   };
 
   const items = currentUser

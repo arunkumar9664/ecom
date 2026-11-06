@@ -15,7 +15,7 @@ export default function NavBar() {
       aria-label="Departments"
       onMouseLeave={() => setOpen(false)}
     >
-      <ul className="flex flex-wrap items-center justify-center gap-y-1 px-4">
+      <ul className="mx-auto flex max-w-[1360px] flex-wrap items-center justify-center gap-y-1 px-6 pt-2">
         {sections.categories.status === 'error' ? (
           <li className="py-3 font-body text-sm text-terracotta">{sections.categories.error}</li>
         ) : null}
@@ -30,14 +30,15 @@ export default function NavBar() {
               {index > 0 ? <span className="mx-3 inline-block h-1.5 w-1.5 rotate-45 bg-terracotta" aria-hidden="true" /> : null}
               <Link
                 to={item.to}
-                className="inline-flex items-center gap-2 py-3 font-heading text-[14px] tracking-[0.08em] text-ink hover:text-olive"
+                className="relative inline-flex items-center py-3 font-heading text-[14px] tracking-[0.08em] text-ink hover:text-olive"
               >
-                {item.label}
                 {item.badge ? (
-                  <span className="bg-terracotta px-1.5 py-0.5 font-body text-[9px] font-semibold tracking-wide text-paper uppercase">
+                  <span className="absolute -top-1 left-1/2 -translate-x-1/2 bg-terracotta px-1.5 py-0.5 font-body text-[8px] font-semibold tracking-wide text-paper uppercase">
                     {item.badge}
+                    <span className="absolute top-full left-1/2 -translate-x-1/2 border-x-[4px] border-t-[4px] border-x-transparent border-t-terracotta" aria-hidden="true" />
                   </span>
                 ) : null}
+                {item.label}
               </Link>
             </li>
           );

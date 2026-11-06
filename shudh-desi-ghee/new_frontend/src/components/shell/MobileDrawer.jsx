@@ -1,23 +1,22 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useShop } from '../../context/ShopContext';
-import { MOCK_DISABLED_MESSAGE } from '../../config/brand';
+import { MOCK_SIGNIN_MESSAGE } from '../../config/brand';
 import { shellNav } from '../../config/nav';
 import { brand } from '../../config/brand';
 import { IconChevron, IconClose, IconHome } from './icons';
 
 export default function MobileDrawer({ open, onClose }) {
-  const { categories, currentUser, useMockData, logoutUser } = useShop();
+  const { categories, currentUser, useMockData, logoutUser, openAuthModal } = useShop();
   const items = shellNav(categories);
-  const navigate = useNavigate();
 
   const goAuth = (tab) => {
     onClose();
     if (useMockData) {
-      toast.error(MOCK_DISABLED_MESSAGE);
+      toast.error(MOCK_SIGNIN_MESSAGE);
       return;
     }
-    navigate(tab === 'register' ? '/login?tab=register' : '/login');
+    openAuthModal(tab);
   };
 
   return (
