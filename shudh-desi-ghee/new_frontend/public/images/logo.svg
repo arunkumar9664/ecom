@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <circle cx="100" cy="100" r="98" fill="#3E2723"/>
+  <circle cx="100" cy="100" r="85" fill="#FFF8E7" stroke="#C8960C" stroke-width="3"/>
+  <ellipse cx="100" cy="115" rx="45" ry="35" fill="#C8960C" opacity="0.9"/>
+  <ellipse cx="100" cy="110" rx="38" ry="28" fill="#D4AF37"/>
+  <path d="M75 85 Q100 60 125 85" stroke="#8B6914" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <text x="100" y="168" text-anchor="middle" font-family="serif" font-size="11" font-weight="bold" fill="#3E2723">SHUDH DESI GHEE</text>
+</svg>

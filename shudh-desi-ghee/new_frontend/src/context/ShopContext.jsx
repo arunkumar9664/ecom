@@ -1,0 +1,646 @@
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import api from '../services/api';
+import { brand, offlineDemo, paymentMethods, storageKeys } from '../config/brand';
+import { defaultSwatch, swatchFor } from '../utils/swatch';
+
+const ShopContext = createContext();
+
+const SECTION_KEYS = ['products', 'categories', 'hero', 'promo', 'settings', 'coupons'];
+
+function idleSections() {
+  return Object.fromEntries(SECTION_KEYS.map((key) => [key, { status: 'idle', error: null }]));
+}
+
+function errorMessage(err, fallback) {
+  return err?.response?.data?.message || err?.message || fallback;
+}
+
+function readJson(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export const ShopProvider = ({ children }) => {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [heroSlides, setHeroSlides] = useState([]);
+  const [promoMessages, setPromoMessages] = useState([]);
+  const [discountCodes, setDiscountCodes] = useState([]);
+  const [storeSettings, setStoreSettings] = useState(null);
+  const [sections, setSections] = useState(idleSections);
+  const [orders, setOrders] = useState([]);
+  const [ordersError, setOrdersError] = useState(null);
+  const [lastServerOrder, setLastServerOrder] = useState(null);
+
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState('login');
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+
+  const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [wishlist, setWishlist] = useState([]);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const productsRef = useRef([]);
+  productsRef.current = products;
+
+  const usesServerCart = Boolean(currentUser) && !offlineDemo;
+
+  const markSection = (key, status, error = null) => {
+    setSections((prev) => ({ ...prev, [key]: { status, error } }));
+  };
+
+  const formatServerCart = (rows) =>
+    rows.map((item) => {
+      const product =
+        item.product ||
+        productsRef.current.find((entry) => entry.id === item.productId) ||
+        { id: item.productId, name: 'Product', price: 0, image: '' };
+      return {
+        id: item.id,
+        product,
+        color: swatchFor(product, item.colorName),
+        size: item.size,
+        quantity: item.quantity,
+      };
+    });
+
+  const loadGuestCart = () => setCart(readJson(storageKeys.guestCart, []));
+  const loadGuestWishlist = () => setWishlist(readJson(storageKeys.guestWishlist, []));
+
+  const persistGuestCart = (updated) => {
+    localStorage.setItem(storageKeys.guestCart, JSON.stringify(updated));
+    return updated;
+  };
+
+  const loadCatalog = useCallback(async () => {
+    if (offlineDemo) {
+      const message = 'Offline demo is on. Live catalog is not loaded.';
+      setProducts([]);
+      setCategories([]);
+      setHeroSlides([]);
+      setPromoMessages([]);
+      setStoreSettings(null);
+      setDiscountCodes([]);
+      setSections(Object.fromEntries(SECTION_KEYS.map((key) => [key, { status: 'error', error: message }])));
+      return;
+    }
+
+    setSections(Object.fromEntries(SECTION_KEYS.map((key) => [key, { status: 'loading', error: null }])));
+
+    const jobs = [
+      ['products', () => api.get('/products'), (res) => setProducts(res.data?.products || [])],
+      ['categories', () => api.get('/categories'), (res) => setCategories(res.data?.categories || [])],
+      ['hero', () => api.get('/hero-slides'), (res) => setHeroSlides(res.data?.heroSlides || [])],
+      ['promo', () => api.get('/promo-messages'), (res) => {
+        const rows = res.data?.promoMessages || [];
+        setPromoMessages(rows.map((row) => (typeof row === 'string' ? row : row.message)));
+      }],
+      ['settings', () => api.get('/store-settings'), (res) => setStoreSettings(res.data?.settings || null)],
+      ['coupons', () => api.get('/coupons'), (res) => setDiscountCodes(res.data?.discounts || [])],
+    ];
+
+    await Promise.all(
+      jobs.map(async ([key, request, apply]) => {
+        try {
+          const res = await request();
+          apply(res);
+          markSection(key, 'ready');
+        } catch (err) {
+          if (key === 'products') setProducts([]);
+          if (key === 'categories') setCategories([]);
+          if (key === 'hero') setHeroSlides([]);
+          if (key === 'promo') setPromoMessages([]);
+          if (key === 'settings') setStoreSettings(null);
+          if (key === 'coupons') setDiscountCodes([]);
+          markSection(key, 'error', errorMessage(err, `Could not load ${key}`));
+        }
+      })
+    );
+  }, []);
+
+  const fetchUserCartAndWishlist = useCallback(async () => {
+    if (!usesServerCart) {
+      loadGuestCart();
+      loadGuestWishlist();
+      return;
+    }
+    try {
+      const [cartRes, wishRes] = await Promise.all([api.get('/cart'), api.get('/wishlist')]);
+      if (cartRes.data?.cart) setCart(formatServerCart(cartRes.data.cart));
+      if (wishRes.data?.wishlist) {
+        setWishlist(wishRes.data.wishlist.map((entry) => (typeof entry === 'string' ? entry : entry.id)));
+      }
+    } catch (err) {
+      toast.error(errorMessage(err, 'Could not load your bag'));
+    }
+  }, [usesServerCart]);
+
+  useEffect(() => {
+    loadGuestCart();
+    loadGuestWishlist();
+    loadCatalog();
+  }, [loadCatalog]);
+
+  useEffect(() => {
+    if (!products.length) return;
+    setCart((prev) =>
+      prev.map((item) => {
+        const product = products.find((entry) => entry.id === item.product?.id) || item.product;
+        return { ...item, product, color: swatchFor(product, item.color?.name) };
+      })
+    );
+  }, [products]);
+
+  useEffect(() => {
+    const initUserSession = async () => {
+      if (offlineDemo) return;
+      const token = localStorage.getItem(storageKeys.accessToken) || sessionStorage.getItem(storageKeys.accessToken);
+      if (!token) return;
+
+      try {
+        const userRes = await api.get('/users/me');
+        if (userRes.data?.user) {
+          setCurrentUser(userRes.data.user);
+        }
+      } catch (err) {
+        localStorage.removeItem(storageKeys.accessToken);
+        localStorage.removeItem(storageKeys.refreshToken);
+        sessionStorage.removeItem(storageKeys.accessToken);
+        sessionStorage.removeItem(storageKeys.refreshToken);
+        toast.error(errorMessage(err, 'Session expired. Please sign in again.'));
+      }
+    };
+    initUserSession();
+  }, []);
+
+  useEffect(() => {
+    if (currentUser && !offlineDemo) {
+      fetchUserCartAndWishlist();
+    }
+  }, [currentUser, fetchUserCartAndWishlist]);
+
+  const fetchUserOrders = async () => {
+    if (offlineDemo || !currentUser || currentUser.role === 'admin') return;
+    try {
+      setOrdersError(null);
+      const res = await api.get('/orders');
+      setOrders(res.data?.orders || []);
+    } catch (err) {
+      const message = errorMessage(err, 'Could not load orders');
+      setOrdersError(message);
+      toast.error(message);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser && currentUser.role !== 'admin' && !offlineDemo) {
+      fetchUserOrders();
+    }
+  }, [currentUser]);
+
+  const mergeGuestCart = async () => {
+    const guestItems = readJson(storageKeys.guestCart, []);
+    if (!guestItems.length) return;
+    try {
+      await Promise.all(
+        guestItems.map((item) => {
+          if (!item.product?.id) return Promise.resolve();
+          return api.post('/cart', {
+            productId: item.product.id,
+            colorName: item.color?.name || 'Standard',
+            size: item.size || 'Standard',
+            quantity: item.quantity || 1,
+          });
+        })
+      );
+      localStorage.removeItem(storageKeys.guestCart);
+    } catch (err) {
+      toast.error(errorMessage(err, 'Could not move your bag to this account'));
+    }
+  };
+
+  const storeSession = (res, { rememberMe, email }) => {
+    const target = rememberMe ? localStorage : sessionStorage;
+    const other = rememberMe ? sessionStorage : localStorage;
+    target.setItem(storageKeys.accessToken, res.data.token);
+    target.setItem(storageKeys.refreshToken, res.data.refreshToken);
+    other.removeItem(storageKeys.accessToken);
+    other.removeItem(storageKeys.refreshToken);
+    if (rememberMe && email) localStorage.setItem(storageKeys.rememberedEmail, email);
+    if (!rememberMe) localStorage.removeItem(storageKeys.rememberedEmail);
+    setCurrentUser(res.data.user);
+  };
+
+  const loginWithEmail = async (email, password, rememberMe = true) => {
+    if (offlineDemo) {
+      const message = 'Offline demo is on. Sign-in is disabled.';
+      toast.error(message);
+      throw new Error(message);
+    }
+    try {
+      const res = await api.post('/auth/login', { email, password });
+      if (!res.data?.token) throw new Error('Login did not return a token');
+      storeSession(res, { rememberMe, email });
+      await mergeGuestCart();
+      closeAuthModal();
+      toast.success('Signed in successfully');
+      return res.data.user;
+    } catch (err) {
+      const message = errorMessage(err, 'Login failed. Check your email and password.');
+      toast.error(message);
+      throw err;
+    }
+  };
+
+  const registerWithEmail = async (name, email, phone, password) => {
+    if (offlineDemo) {
+      const message = 'Offline demo is on. Registration is disabled.';
+      toast.error(message);
+      throw new Error(message);
+    }
+    try {
+      const res = await api.post('/auth/register', { name, email, phone, password });
+      if (!res.data?.token) throw new Error('Registration did not return a token');
+      storeSession(res, { rememberMe: true, email });
+      await mergeGuestCart();
+      closeAuthModal();
+      toast.success('Account created');
+      return res.data.user;
+    } catch (err) {
+      const message = err.response?.data?.errors?.[0]?.message || errorMessage(err, 'Registration failed.');
+      toast.error(message);
+      throw err;
+    }
+  };
+
+  const loginWithGoogle = async (credential) => {
+    if (offlineDemo) {
+      const message = 'Offline demo is on. Google sign-in is disabled.';
+      toast.error(message);
+      throw new Error(message);
+    }
+    try {
+      const res = await api.post('/auth/google', { credential });
+      if (!res.data?.token) throw new Error('Google sign-in did not return a token');
+      storeSession(res, { rememberMe: true, email: res.data.user?.email });
+      await mergeGuestCart();
+      closeAuthModal();
+      toast.success('Signed in with Google');
+      return res.data.user;
+    } catch (err) {
+      const message = errorMessage(err, 'Google sign-in failed.');
+      toast.error(message);
+      throw err;
+    }
+  };
+
+  const logoutUser = async () => {
+    if (!offlineDemo) {
+      try {
+        await api.post('/auth/logout');
+      } catch {
+        /* server logout is a no-op today */
+      }
+    }
+    localStorage.removeItem(storageKeys.accessToken);
+    localStorage.removeItem(storageKeys.refreshToken);
+    sessionStorage.removeItem(storageKeys.accessToken);
+    sessionStorage.removeItem(storageKeys.refreshToken);
+    setCurrentUser(null);
+    setOrders([]);
+    loadGuestCart();
+    loadGuestWishlist();
+    closeAccountModal();
+    toast.success('Signed out');
+  };
+
+  const addToCart = async (product, color = null, size = null, quantity = 1) => {
+    const chosenColor = color?.name ? swatchFor(product, color.name) : defaultSwatch(product);
+    const chosenSize = size || product?.sizes?.[0] || 'Standard';
+
+    if (!usesServerCart) {
+      setCart((prev) => {
+        const idx = prev.findIndex(
+          (item) => item.product?.id === product.id && item.color?.name === chosenColor.name && item.size === chosenSize
+        );
+        const updated = [...prev];
+        if (idx >= 0) {
+          updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + quantity };
+        } else {
+          updated.push({
+            id: `local-${product.id}-${chosenColor.name}-${chosenSize}`,
+            product,
+            color: chosenColor,
+            size: chosenSize,
+            quantity,
+          });
+        }
+        return persistGuestCart(updated);
+      });
+      setIsCartOpen(true);
+      toast.success('Added to bag');
+      return;
+    }
+
+    try {
+      await api.post('/cart', {
+        productId: product.id,
+        colorName: chosenColor.name,
+        size: chosenSize,
+        quantity,
+      });
+      await fetchUserCartAndWishlist();
+      setIsCartOpen(true);
+      toast.success('Added to bag');
+    } catch (err) {
+      toast.error(errorMessage(err, 'Could not add this to your bag'));
+    }
+  };
+
+  const removeFromCart = async (indexOrId) => {
+    const itemToDelete = cart[indexOrId] || cart.find((item) => item.id === indexOrId);
+    if (usesServerCart && itemToDelete?.id && !String(itemToDelete.id).startsWith('local-')) {
+      try {
+        await api.delete(`/cart/${itemToDelete.id}`);
+        await fetchUserCartAndWishlist();
+        return;
+      } catch (err) {
+        toast.error(errorMessage(err, 'Could not remove that item'));
+        return;
+      }
+    }
+    setCart((prev) => {
+      const updated = prev.filter((item, index) => index !== indexOrId && item.id !== indexOrId);
+      if (!usesServerCart) persistGuestCart(updated);
+      return updated;
+    });
+  };
+
+  const updateQuantity = async (indexOrId, delta) => {
+    const targetItem = cart[indexOrId] || cart.find((item) => item.id === indexOrId);
+    if (!targetItem) return;
+    const newQty = targetItem.quantity + delta;
+
+    if (usesServerCart && targetItem.id && !String(targetItem.id).startsWith('local-')) {
+      try {
+        if (newQty <= 0) await api.delete(`/cart/${targetItem.id}`);
+        else await api.put(`/cart/${targetItem.id}`, { quantity: newQty });
+        await fetchUserCartAndWishlist();
+      } catch (err) {
+        toast.error(errorMessage(err, 'Could not update quantity'));
+      }
+      return;
+    }
+
+    setCart((prev) => {
+      const idx = typeof indexOrId === 'number' ? indexOrId : prev.findIndex((item) => item.id === indexOrId);
+      if (idx === -1) return prev;
+      if (newQty <= 0) {
+        const filtered = prev.filter((_, index) => index !== idx);
+        if (!usesServerCart) persistGuestCart(filtered);
+        return filtered;
+      }
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], quantity: newQty };
+      if (!usesServerCart) persistGuestCart(updated);
+      return updated;
+    });
+  };
+
+  const clearCart = async () => {
+    if (usesServerCart) {
+      try {
+        await api.delete('/cart');
+      } catch (err) {
+        toast.error(errorMessage(err, 'Could not clear the bag'));
+      }
+    }
+    setCart([]);
+    localStorage.removeItem(storageKeys.guestCart);
+  };
+
+  const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const cartSubtotal = cart.reduce((sum, item) => sum + (item.product?.price || 0) * (item.quantity || 1), 0);
+
+  const shippingQuote = (() => {
+    if (sections.settings.status !== 'ready' || !storeSettings) {
+      return { known: false, message: 'Shipping calculated at checkout' };
+    }
+    const threshold = Number(storeSettings.freeShippingThreshold);
+    const fee = Number(storeSettings.shippingFee);
+    const qualifies = cartSubtotal >= threshold;
+    return { known: true, fee: qualifies ? 0 : fee, threshold, qualifies };
+  })();
+
+  const toggleWishlist = async (productId) => {
+    if (!usesServerCart) {
+      setWishlist((prev) => {
+        const next = prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId];
+        localStorage.setItem(storageKeys.guestWishlist, JSON.stringify(next));
+        toast.success(prev.includes(productId) ? 'Removed from wishlist' : 'Saved to wishlist');
+        return next;
+      });
+      return;
+    }
+
+    try {
+      const res = await api.post('/wishlist', { productId });
+      if (res.data?.added) {
+        setWishlist((prev) => [...prev, productId]);
+        toast.success('Saved to wishlist');
+      } else {
+        setWishlist((prev) => prev.filter((id) => id !== productId));
+        toast.success('Removed from wishlist');
+      }
+    } catch (err) {
+      toast.error(errorMessage(err, 'Could not update the wishlist'));
+    }
+  };
+
+  const isInWishlist = (productId) => wishlist.includes(productId);
+
+  const validateCoupon = useCallback(
+    async (code, cartSubtotalAmount) => {
+      if (offlineDemo || sections.coupons.status === 'error') {
+        return { valid: false, message: sections.coupons.error || 'Offers are unavailable right now' };
+      }
+      try {
+        const res = await api.post('/coupons/validate', { code, cartSubtotal: cartSubtotalAmount });
+        return res.data;
+      } catch (err) {
+        return { valid: false, message: errorMessage(err, 'That code could not be applied') };
+      }
+    },
+    [sections.coupons]
+  );
+
+  const submitProductReview = async (productId, reviewData) => {
+    if (offlineDemo) {
+      const message = 'Offline demo is on. Reviews are not saved.';
+      toast.error(message);
+      throw new Error(message);
+    }
+    try {
+      const res = await api.post(`/products/${productId}/reviews`, reviewData);
+      const prodRes = await api.get(`/products/${productId}`);
+      if (prodRes.data?.product) {
+        setProducts((prev) => prev.map((product) => (product.id === productId ? prodRes.data.product : product)));
+      }
+      toast.success('Review submitted');
+      return res.data?.review;
+    } catch (err) {
+      const message = errorMessage(err, 'Could not submit the review');
+      toast.error(message);
+      throw err;
+    }
+  };
+
+  const fetchProductReviews = async (productId, page = 1) => {
+    if (offlineDemo) {
+      return { reviews: [], error: 'Offline demo is on. Reviews are not loaded.' };
+    }
+    try {
+      const res = await api.get(`/products/${productId}/reviews?page=${page}`);
+      return res.data;
+    } catch (err) {
+      return { reviews: [], error: errorMessage(err, 'Could not load reviews') };
+    }
+  };
+
+  const addOrder = async (orderData) => {
+    if (offlineDemo) {
+      const message = 'Offline demo is on. Orders are not placed.';
+      toast.error(message);
+      throw new Error(message);
+    }
+    if (orderData.paymentMethod !== paymentMethods.razorpay && orderData.paymentMethod !== paymentMethods.cod) {
+      const message = 'Choose Prepaid (Razorpay) or Cash on Delivery (COD).';
+      toast.error(message);
+      throw new Error(message);
+    }
+
+    try {
+      const res = await api.post('/orders', orderData);
+      const created = res.data?.order;
+      if (!created) throw new Error('The server did not return an order');
+      setLastServerOrder(created);
+      if (orderData.paymentMethod === paymentMethods.cod) {
+        setOrders((prev) => [created, ...prev]);
+        await clearCart();
+        toast.success('Order placed');
+        if (currentUser && currentUser.role !== 'admin') await fetchUserOrders();
+      }
+      return created;
+    } catch (err) {
+      const message = errorMessage(err, 'Could not place the order');
+      toast.error(message);
+      throw err;
+    }
+  };
+
+  const cancelUserOrder = async (orderId, reason) => {
+    if (offlineDemo) throw new Error('Offline demo is on.');
+    try {
+      const res = await api.put(`/orders/${orderId}/cancel`, { reason });
+      if (res.data?.order) {
+        setOrders((prev) => prev.map((order) => (order.id === orderId ? res.data.order : order)));
+        toast.success('Order cancelled');
+        return res.data.order;
+      }
+    } catch (err) {
+      const message = errorMessage(err, 'Could not cancel the order');
+      toast.error(message);
+      throw err;
+    }
+  };
+
+  const openAuthModal = (tab = 'login') => {
+    setAuthModalTab(tab);
+    setIsAuthModalOpen(true);
+  };
+  const closeAuthModal = () => setIsAuthModalOpen(false);
+  const openAccountModal = () => setIsAccountModalOpen(true);
+  const closeAccountModal = () => setIsAccountModalOpen(false);
+
+  return (
+    <ShopContext.Provider
+      value={{
+        products,
+        categories,
+        heroSlides,
+        promoMessages,
+        discountCodes,
+        storeSettings,
+        sections,
+        shippingQuote,
+        orders,
+        ordersError,
+        lastServerOrder,
+        loadCatalog,
+        offlineDemo,
+        usesServerCart,
+        guestCheckoutNote: brand.guestCheckoutNote,
+        paymentMethods,
+
+        currentUser,
+        isAuthModalOpen,
+        authModalTab,
+        setAuthModalTab,
+        isAccountModalOpen,
+        openAuthModal,
+        closeAuthModal,
+        openAccountModal,
+        closeAccountModal,
+        loginWithEmail,
+        registerWithEmail,
+        loginWithGoogle,
+        logoutUser,
+        fetchUserOrders,
+
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        cartCount,
+        cartSubtotal,
+        isCartOpen,
+        setIsCartOpen,
+        wishlist,
+        toggleWishlist,
+        isInWishlist,
+        isWishlistOpen,
+        setIsWishlistOpen,
+        quickViewProduct,
+        setQuickViewProduct,
+        isSearchOpen,
+        setIsSearchOpen,
+        searchQuery,
+        setSearchQuery,
+        validateCoupon,
+        submitProductReview,
+        fetchProductReviews,
+        addOrder,
+        cancelUserOrder,
+      }}
+    >
+      {children}
+    </ShopContext.Provider>
+  );
+};
+
+export const useShop = () => {
+  const context = useContext(ShopContext);
+  if (!context) throw new Error('useShop must be used within a ShopProvider');
+  return context;
+};
