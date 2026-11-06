@@ -1,26 +1,49 @@
 import { useShop } from '../context/ShopContext';
+import { bestsellerSelection, giftingSelection } from '../utils/collections';
+import HeroCarousel from '../components/home/HeroCarousel';
+import CategoryTiles from '../components/home/CategoryTiles';
+import ProductCarousel from '../components/home/ProductCarousel';
+import CraftCoverflow from '../components/home/CraftCoverflow';
+import OurStory from '../components/home/OurStory';
+import JournalRow from '../components/home/JournalRow';
 
 export default function HomePage() {
-  const { sections, loadCatalog } = useShop();
-  const errors = Object.entries(sections).filter(([, section]) => section.status === 'error');
+  const { products, categories, heroSlides, sections, loadCatalog } = useShop();
+  const gifts = giftingSelection(products, categories);
+  const best = bestsellerSelection(products);
+  const arrivals = (products || []).slice(0, 12);
 
   return (
-    <main className="mx-auto min-h-[50vh] max-w-3xl px-6 py-16">
-      {errors.length ? (
-        <>
-          <h1 className="font-heading text-3xl text-ink">Some of the shop did not load</h1>
-          <ul className="mt-4 space-y-2 font-body text-sm text-terracotta">
-            {errors.map(([key, section]) => (
-              <li key={key}>{section.error}</li>
-            ))}
-          </ul>
-          <button type="button" onClick={loadCatalog} className="mt-6 border border-olive px-4 py-2 font-body text-sm text-olive">
-            Retry
-          </button>
-        </>
-      ) : (
-        <p className="font-heading text-2xl text-muted">The home page arrives in the next phase.</p>
-      )}
+    <main>
+      <HeroCarousel slides={heroSlides} status={sections.hero} onRetry={loadCatalog} />
+      <CategoryTiles categories={categories} status={sections.categories} onRetry={loadCatalog} />
+      <ProductCarousel
+        title="Gifting essentials"
+        label="Gifting essentials"
+        products={gifts.products}
+        href={gifts.href}
+        status={sections.products}
+        onRetry={loadCatalog}
+      />
+      <ProductCarousel
+        title="New arrivals"
+        label="New arrivals"
+        products={arrivals}
+        href="/shop"
+        status={sections.products}
+        onRetry={loadCatalog}
+      />
+      <ProductCarousel
+        title="Bestsellers"
+        label="Bestsellers"
+        products={best.products}
+        href={best.href}
+        status={sections.products}
+        onRetry={loadCatalog}
+      />
+      <CraftCoverflow />
+      <OurStory />
+      <JournalRow />
     </main>
   );
 }

@@ -35,6 +35,24 @@ body {
   outline-offset: 2px;
 }
 
+@media (hover: hover) {
+  .add-on-hover {
+    max-height: 0;
+    margin-top: 0;
+    overflow: hidden;
+    border-color: transparent;
+    opacity: 0;
+  }
+
+  .group:hover .add-on-hover,
+  .group:focus-within .add-on-hover {
+    max-height: 2.75rem;
+    margin-top: 0.75rem;
+    border-color: var(--color-ink);
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
