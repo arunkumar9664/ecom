@@ -1,7 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
-import { brand, offlineDemo, paymentMethods, storageKeys } from '../config/brand';
+import { brand, MOCK_DISABLED_MESSAGE, offlineDemo, paymentMethods, storageKeys, useMockData } from '../config/brand';
+import { mockGet } from '../mocks/catalog';
 import { defaultSwatch, swatchFor } from '../utils/swatch';
 
 const ShopContext = createContext();
@@ -53,7 +54,7 @@ export const ShopProvider = ({ children }) => {
   const productsRef = useRef([]);
   productsRef.current = products;
 
-  const usesServerCart = Boolean(currentUser) && !offlineDemo;
+  const usesServerCart = Boolean(currentUser) && !offlineDemo && !useMockData;
 
   const markSection = (key, status, error = null) => {
     setSections((prev) => ({ ...prev, [key]: { status, error } }));
@@ -83,7 +84,7 @@ export const ShopProvider = ({ children }) => {
   };
 
   const loadCatalog = useCallback(async () => {
-    if (offlineDemo) {
+    if (!useMockData && offlineDemo) {
       const message = 'Offline demo is on. Live catalog is not loaded.';
       setProducts([]);
       setCategories([]);
@@ -97,16 +98,17 @@ export const ShopProvider = ({ children }) => {
 
     setSections(Object.fromEntries(SECTION_KEYS.map((key) => [key, { status: 'loading', error: null }])));
 
+    const get = useMockData ? mockGet : (path) => api.get(path);
     const jobs = [
-      ['products', () => api.get('/products'), (res) => setProducts(res.data?.products || [])],
-      ['categories', () => api.get('/categories'), (res) => setCategories(res.data?.categories || [])],
-      ['hero', () => api.get('/hero-slides'), (res) => setHeroSlides(res.data?.heroSlides || [])],
-      ['promo', () => api.get('/promo-messages'), (res) => {
+      ['products', () => get('/products'), (res) => setProducts(res.data?.products || [])],
+      ['categories', () => get('/categories'), (res) => setCategories(res.data?.categories || [])],
+      ['hero', () => get('/hero-slides'), (res) => setHeroSlides(res.data?.heroSlides || [])],
+      ['promo', () => get('/promo-messages'), (res) => {
         const rows = res.data?.promoMessages || [];
         setPromoMessages(rows.map((row) => (typeof row === 'string' ? row : row.message)));
       }],
-      ['settings', () => api.get('/store-settings'), (res) => setStoreSettings(res.data?.settings || null)],
-      ['coupons', () => api.get('/coupons'), (res) => setDiscountCodes(res.data?.discounts || [])],
+      ['settings', () => get('/store-settings'), (res) => setStoreSettings(res.data?.settings || null)],
+      ['coupons', () => get('/coupons'), (res) => setDiscountCodes(res.data?.discounts || [])],
     ];
 
     await Promise.all(
@@ -163,7 +165,7 @@ export const ShopProvider = ({ children }) => {
 
   useEffect(() => {
     const initUserSession = async () => {
-      if (offlineDemo) return;
+      if (offlineDemo || useMockData) return;
       const token = localStorage.getItem(storageKeys.accessToken) || sessionStorage.getItem(storageKeys.accessToken);
       if (!token) return;
 
@@ -190,7 +192,7 @@ export const ShopProvider = ({ children }) => {
   }, [currentUser, fetchUserCartAndWishlist]);
 
   const fetchUserOrders = async () => {
-    if (offlineDemo || !currentUser || currentUser.role === 'admin') return;
+    if (offlineDemo || useMockData || !currentUser || currentUser.role === 'admin') return;
     try {
       setOrdersError(null);
       const res = await api.get('/orders');
@@ -241,7 +243,13 @@ export const ShopProvider = ({ children }) => {
     setCurrentUser(res.data.user);
   };
 
+  const refuseMock = () => {
+    toast.error(MOCK_DISABLED_MESSAGE);
+    throw new Error(MOCK_DISABLED_MESSAGE);
+  };
+
   const loginWithEmail = async (email, password, rememberMe = true) => {
+    if (useMockData) return refuseMock();
     if (offlineDemo) {
       const message = 'Offline demo is on. Sign-in is disabled.';
       toast.error(message);
@@ -263,6 +271,7 @@ export const ShopProvider = ({ children }) => {
   };
 
   const registerWithEmail = async (name, email, phone, password) => {
+    if (useMockData) return refuseMock();
     if (offlineDemo) {
       const message = 'Offline demo is on. Registration is disabled.';
       toast.error(message);
@@ -284,6 +293,7 @@ export const ShopProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async (credential) => {
+    if (useMockData) return refuseMock();
     if (offlineDemo) {
       const message = 'Offline demo is on. Google sign-in is disabled.';
       toast.error(message);
@@ -305,7 +315,7 @@ export const ShopProvider = ({ children }) => {
   };
 
   const logoutUser = async () => {
-    if (!offlineDemo) {
+    if (!offlineDemo && !useMockData) {
       try {
         await api.post('/auth/logout');
       } catch {
@@ -471,6 +481,22 @@ export const ShopProvider = ({ children }) => {
 
   const validateCoupon = useCallback(
     async (code, cartSubtotalAmount) => {
+      if (useMockData) {
+        const normalized = String(code || '').trim().toUpperCase();
+        const coupon = discountCodes.find((entry) => entry.code.toUpperCase() === normalized && entry.isActive !== false);
+        if (!coupon) return { valid: false, message: 'Invalid or inactive promo code' };
+        const subtotal = Number(cartSubtotalAmount) || 0;
+        if (subtotal < coupon.minSpend) {
+          return { valid: false, message: `Code ${coupon.code} requires a minimum order value of ₹${coupon.minSpend}` };
+        }
+        return {
+          valid: true,
+          code: coupon.code,
+          discountPercent: coupon.discountPercent,
+          discountAmount: Math.round((subtotal * coupon.discountPercent) / 100),
+          description: coupon.description,
+        };
+      }
       if (offlineDemo || sections.coupons.status === 'error') {
         return { valid: false, message: sections.coupons.error || 'Offers are unavailable right now' };
       }
@@ -481,10 +507,11 @@ export const ShopProvider = ({ children }) => {
         return { valid: false, message: errorMessage(err, 'That code could not be applied') };
       }
     },
-    [sections.coupons]
+    [sections.coupons, discountCodes]
   );
 
   const submitProductReview = async (productId, reviewData) => {
+    if (useMockData) return refuseMock();
     if (offlineDemo) {
       const message = 'Offline demo is on. Reviews are not saved.';
       toast.error(message);
@@ -506,6 +533,7 @@ export const ShopProvider = ({ children }) => {
   };
 
   const fetchProductReviews = async (productId, page = 1) => {
+    if (useMockData) return { reviews: [], pagination: { total: 0, page, limit: 10, totalPages: 1 }, canReview: false };
     if (offlineDemo) {
       return { reviews: [], error: 'Offline demo is on. Reviews are not loaded.' };
     }
@@ -518,6 +546,7 @@ export const ShopProvider = ({ children }) => {
   };
 
   const addOrder = async (orderData) => {
+    if (useMockData) return refuseMock();
     if (offlineDemo) {
       const message = 'Offline demo is on. Orders are not placed.';
       toast.error(message);
@@ -588,6 +617,7 @@ export const ShopProvider = ({ children }) => {
         lastServerOrder,
         loadCatalog,
         offlineDemo,
+        useMockData,
         usesServerCart,
         guestCheckoutNote: brand.guestCheckoutNote,
         paymentMethods,

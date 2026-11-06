@@ -16,6 +16,32 @@ export const NAV_OVERRIDE = [
   { label: 'All Products', kind: 'path', to: '/shop' },
 ];
 
+/** Search links for the mega menu. Not category slugs. // TODO(backend) for a real scent field. */
+export const scentLinks = [
+  { label: 'Floral', to: '/shop?search=floral' },
+  { label: 'Citrus', to: '/shop?search=citrus' },
+  { label: 'Woody', to: '/shop?search=wood' },
+  { label: 'Herbal', to: '/shop?search=herb' },
+  { label: 'Linen', to: '/shop?search=linen' },
+  { label: 'Smoke', to: '/shop?search=smoke' },
+];
+
+function withGiftBadge(item) {
+  if (item.badge) return item;
+  if (/gift/i.test(item.slug || '') || /gift/i.test(item.label || '')) return { ...item, badge: 'New' };
+  return item;
+}
+
+export function shellNav(categories) {
+  const items = resolveNav(categories).map(withGiftBadge);
+  if (NAV_SOURCE === 'override') return items;
+  return [
+    ...items,
+    { label: 'Bestsellers', to: '/shop?collection=bestsellers' },
+    { label: 'All Products', to: '/shop' },
+  ];
+}
+
 export function resolveNav(categories) {
   const list = Array.isArray(categories) ? categories : [];
   const bySlug = new Map(list.filter((category) => category?.slug).map((category) => [category.slug, category]));

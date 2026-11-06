@@ -29,3 +29,6 @@ export const storageKeys = {
 export const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 export const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || '';
 export const offlineDemo = import.meta.env.VITE_OFFLINE_DEMO === 'true';
+export const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true';
+
+export const MOCK_DISABLED_MESSAGE = 'Mock mode: orders are not placed.';
