@@ -3,7 +3,8 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import SafeImage from '../components/SafeImage';
 import ProductCard from '../components/home/ProductCard';
 import FilterDrawer from '../components/listing/FilterDrawer';
-import { useShop } from '../context/ShopContext';
+import { useShop } from '../hooks/useShop';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import { scentLinks } from '../config/nav';
 
 const PAGE_SIZE = 12;
@@ -33,6 +34,7 @@ export default function ListingPage() {
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [price, setPrice] = useState({ min: params.get('minPrice') || '', max: params.get('maxPrice') || '' });
+  const [queryKey, setQueryKey] = useState('');
 
   const search = params.get('search') || '';
   const minPrice = params.get('minPrice') || '';
@@ -53,20 +55,21 @@ export default function ListingPage() {
     setParams(next);
   };
 
-  useEffect(() => {
+  const nextQueryKey = [slug, search, minPrice, maxPrice, size, sort, collection, missingCategory, sections.categories.status].join('|');
+  if (queryKey !== nextQueryKey) {
+    setQueryKey(nextQueryKey);
     setPrice({ min: minPrice, max: maxPrice });
-  }, [minPrice, maxPrice]);
-
-  useEffect(() => {
     setVisible(PAGE_SIZE);
-  }, [slug, search, minPrice, maxPrice, size, sort, collection]);
+    if (!(slug && sections.categories.status === 'loading') && !missingCategory) {
+      setStatus('loading');
+      setError('');
+    }
+  }
 
   useEffect(() => {
     if (slug && sections.categories.status === 'loading') return undefined;
     if (missingCategory) return undefined;
-    let cancelled = false;
-    setStatus('loading');
-    setError('');
+    const gate = { current: false };
     queryProducts({
       categorySlug: slug || '',
       search,
@@ -74,7 +77,7 @@ export default function ListingPage() {
       maxPrice,
       size,
     }).then((result) => {
-      if (cancelled) return;
+      if (gate.current) return;
       if (result.error) {
         setRows([]);
         setError(result.error);
@@ -85,7 +88,7 @@ export default function ListingPage() {
       setStatus('ready');
     });
     return () => {
-      cancelled = true;
+      gate.current = true;
     };
   }, [slug, search, minPrice, maxPrice, size, missingCategory, sections.categories.status, queryProducts]);
 
@@ -110,6 +113,7 @@ export default function ListingPage() {
     : collection === 'bestsellers'
       ? 'Bestsellers'
       : category?.name || 'All products';
+  useDocumentTitle(title, `Shop ${title} at Field & Hearth.`);
 
   const clearFilters = () => {
     setParams(new URLSearchParams());
@@ -177,7 +181,7 @@ export default function ListingPage() {
         </div>
       </section>
 
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-6 md:px-8">
+      <div className="mx-auto flex max-w-[1360px] flex-wrap items-center justify-between gap-4 px-4 py-6 md:px-8">
         <button type="button" onClick={() => setFiltersOpen(true)} className="h-11 border border-ink px-5 font-body text-xs tracking-[0.16em] text-ink uppercase">
           Filter
         </button>
@@ -203,7 +207,7 @@ export default function ListingPage() {
       </div>
 
       {chips.length ? (
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 pb-4 md:px-8">
+        <div className="mx-auto flex max-w-[1360px] flex-wrap items-center gap-2 px-4 pb-4 md:px-8">
           {chips.map((chip) => (
             <button
               key={chip.key}
@@ -221,7 +225,7 @@ export default function ListingPage() {
         </div>
       ) : null}
 
-      <div className="mx-auto max-w-6xl px-4 pb-16 md:px-8">
+      <div className="mx-auto max-w-[1360px] px-4 pb-16 md:px-8">
         {status === 'loading' ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (

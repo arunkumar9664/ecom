@@ -5,7 +5,7 @@ import { storyImage } from '../../data/homeStories';
 export default function OurStory() {
   return (
     <section className="px-4 py-12 md:px-8">
-      <div className="mx-auto grid max-w-6xl items-stretch gap-0 md:grid-cols-2">
+      <div className="mx-auto grid max-w-[1360px] items-stretch gap-0 md:grid-cols-2">
         <div className="flex flex-col justify-center border border-line bg-white px-6 py-10 md:px-12">
           <h2 className="font-heading text-4xl text-ink">Our story</h2>
           <p className="mt-4 font-body text-sm leading-relaxed text-muted">
@@ -15,7 +15,7 @@ export default function OurStory() {
             Discover our journey
           </Link>
         </div>
-        <SafeImage src={storyImage} alt="A jar of ghee used as a stand-in photograph" className="aspect-[4/3] h-full w-full object-cover md:aspect-auto md:min-h-[420px]" />
+        <SafeImage src={storyImage} alt="A jar from the workshop, standing in until a photograph of the bench is ready" className="aspect-[4/3] h-full w-full object-cover md:aspect-auto md:min-h-[420px]" />
       </div>
     </section>
   );

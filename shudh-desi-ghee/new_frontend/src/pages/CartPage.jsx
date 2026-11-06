@@ -1,21 +1,13 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useShop } from '../context/ShopContext';
-import { formatRupee } from '../components/shell/icons';
+import { useShop } from '../hooks/useShop';
+import { formatRupee } from '../utils/money';
 import SafeImage from '../components/SafeImage';
 import ProductCarousel from '../components/home/ProductCarousel';
 import useFocusTrap from '../hooks/useFocusTrap';
-
-const COUPON_KEY = 'fieldhearth_applied_coupon';
-
-export function readAppliedCoupon() {
-  try {
-    const raw = sessionStorage.getItem(COUPON_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
+import { clearAppliedCoupon, readAppliedCoupon, writeAppliedCoupon } from '../utils/coupon';
+import { MAX_LINE_QUANTITY } from '../config/brand';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 export default function CartPage() {
   const {
@@ -28,7 +20,14 @@ export default function CartPage() {
   const [offerError, setOfferError] = useState('');
   const [offerOk, setOfferOk] = useState('');
   const [applying, setApplying] = useState(false);
-  const [coupon, setCoupon] = useState(() => readAppliedCoupon());
+  const [coupon, setCoupon] = useState(() => readAppliedCoupon(cartSubtotal));
+  const [couponNote, setCouponNote] = useState('');
+  if (coupon && coupon.subtotal !== cartSubtotal) {
+    clearAppliedCoupon();
+    setCoupon(null);
+    setCouponNote('The bag changed, so the offer was cleared. Apply it again.');
+  }
+  useDocumentTitle('Shopping cart', 'Review the bag before checkout.');
   const panel = useRef(null);
   useFocusTrap(offersOpen, panel, () => setOffersOpen(false));
 
@@ -62,8 +61,10 @@ export default function CartPage() {
         code: result.code,
         discountAmount: result.discountAmount,
         discountPercent: result.discountPercent,
+        subtotal: cartSubtotal,
       };
-      sessionStorage.setItem(COUPON_KEY, JSON.stringify(saved));
+      writeAppliedCoupon(saved);
+      setCouponNote('');
       setCoupon(saved);
       setOfferOk(`${saved.code} applied`);
       setCode('');
@@ -106,7 +107,7 @@ export default function CartPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <Link to={`/product/${line.product?.id}`} className="font-body text-sm font-medium text-ink">{line.product?.name}</Link>
+                        <Link to={`/product/${line.product?.id}`} className="font-body text-sm font-medium break-words text-ink">{line.product?.name}</Link>
                         <p className="mt-1 font-body text-xs text-muted">{line.color?.name} · {line.size}</p>
                         {line.product?.isSoldOut ? <p className="mt-1 font-body text-xs text-terracotta">Sold out</p> : null}
                       </div>
@@ -116,7 +117,7 @@ export default function CartPage() {
                       <div className="inline-flex border border-line">
                         <button type="button" aria-label={`Decrease ${line.product?.name}`} className="h-9 w-9 font-bold" onClick={() => updateQuantity(line.id, -1)}>−</button>
                         <span className="flex h-9 w-8 items-center justify-center font-body text-sm">{line.quantity}</span>
-                        <button type="button" aria-label={`Increase ${line.product?.name}`} className="h-9 w-9 font-bold" onClick={() => updateQuantity(line.id, 1)}>+</button>
+                        <button type="button" aria-label={`Increase ${line.product?.name}`} className="h-9 w-9 font-bold disabled:text-muted" disabled={line.quantity >= MAX_LINE_QUANTITY || line.product?.isSoldOut} onClick={() => updateQuantity(line.id, 1)}>+</button>
                       </div>
                       <button type="button" className="font-body text-sm text-ink underline" onClick={() => removeFromCart(line.id)}>Remove</button>
                     </div>
@@ -124,6 +125,7 @@ export default function CartPage() {
                 </li>
               ))}
             </ul>
+            {couponNote ? <p className="mt-4 font-body text-sm text-terracotta" role="status">{couponNote}</p> : null}
             <button type="button" onClick={() => setOffersOpen(true)} className="mt-6 h-12 w-full border border-ink font-body text-sm text-ink">
               Apply Offers
             </button>

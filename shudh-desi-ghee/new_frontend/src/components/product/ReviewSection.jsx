@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useShop } from '../../context/ShopContext';
+import { useShop } from '../../hooks/useShop';
 
 const PAGE = 4;
 
@@ -25,8 +25,17 @@ export default function ReviewSection({ productId }) {
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
 
+  const [seenProduct, setSeenProduct] = useState(productId);
+  if (seenProduct !== productId) {
+    setSeenProduct(productId);
+    setPage(1);
+    setStatus('loading');
+    setReviews([]);
+    setError('');
+  }
+
   const load = (nextPage, append) => {
-    setStatus(append ? 'ready' : 'loading');
+    if (!append) setStatus('loading');
     fetchProductReviews(productId, nextPage, PAGE).then((result) => {
       if (result.error) {
         setError(result.error);
@@ -42,9 +51,24 @@ export default function ReviewSection({ productId }) {
   };
 
   useEffect(() => {
-    setPage(1);
-    load(1, false);
-  }, [productId]);
+    const gate = { current: false };
+    fetchProductReviews(productId, 1, PAGE).then((result) => {
+      if (gate.current) return;
+      if (result.error) {
+        setError(result.error);
+        setStatus('error');
+        return;
+      }
+      setReviews(result.reviews || []);
+      setPagination(result.pagination || null);
+      setCanReview(Boolean(result.canReview));
+      setError('');
+      setStatus('ready');
+    });
+    return () => {
+      gate.current = true;
+    };
+  }, [productId, fetchProductReviews]);
 
   const total = pagination?.total ?? reviews.length;
   const hasMore = pagination ? page < pagination.totalPages : false;

@@ -1,9 +1,11 @@
 import { Navigate } from 'react-router-dom';
-import { useShop } from '../context/ShopContext';
+import { useShop } from '../hooks/useShop';
 import AuthForm from '../components/auth/AuthForm';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 export default function TrackOrderPage() {
   const { currentUser } = useShop();
+  useDocumentTitle('Track an order', 'Sign in to see orders on your account.');
   if (currentUser) return <Navigate to="/orders" replace />;
   return (
     <main className="mx-auto max-w-md px-4 py-12">

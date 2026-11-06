@@ -26,8 +26,8 @@ export default function CategoryTiles({ categories, status, onRetry }) {
   if (!items.length) return null;
 
   return (
-    <section aria-label="Shop by category" className="py-8 md:py-10">
-      <div className="flex gap-3 overflow-x-auto px-4 pb-2 md:px-8">
+    <section aria-label="Shop by category" className="overflow-hidden py-8 md:py-10">
+      <div className="mx-auto flex max-w-[1360px] gap-3 overflow-x-auto px-4 pb-2 md:px-8">
         {items.map((category) => (
           <Link
             key={category.id || category.slug}

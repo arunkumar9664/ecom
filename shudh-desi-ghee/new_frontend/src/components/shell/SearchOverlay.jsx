@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useShop } from '../../context/ShopContext';
+import { useShop } from '../../hooks/useShop';
 import SafeImage from '../SafeImage';
 import { IconClose } from './icons';
-import { formatRupee } from './icons';
+import { formatRupee } from '../../utils/money';
+import useFocusTrap from '../../hooks/useFocusTrap';
 
 export default function SearchOverlay() {
   const { isSearchOpen, setIsSearchOpen, products, searchQuery, setSearchQuery } = useShop();
   const navigate = useNavigate();
   const [local, setLocal] = useState(searchQuery);
+  const panel = useRef(null);
+  const close = () => setIsSearchOpen(false);
+  useFocusTrap(isSearchOpen, panel, close);
 
   useEffect(() => {
     if (!isSearchOpen) return undefined;
@@ -32,14 +36,15 @@ export default function SearchOverlay() {
   if (!isSearchOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-ink/30" role="dialog" aria-label="Search">
-      <div className="bg-paper px-4 pt-4 pb-6 shadow-lg sm:px-8">
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Search">
+      <button type="button" className="absolute inset-0 bg-ink/30" aria-label="Close search" onClick={close} />
+      <div ref={panel} className="relative bg-paper px-4 pt-4 pb-6 shadow-lg sm:px-8">
         <form
           className="mx-auto flex max-w-3xl items-center gap-3 border-b border-ink"
           onSubmit={(event) => {
             event.preventDefault();
             setSearchQuery(local);
-            setIsSearchOpen(false);
+            close();
             navigate(`/shop?search=${encodeURIComponent(local.trim())}`);
           }}
         >
@@ -51,7 +56,7 @@ export default function SearchOverlay() {
             className="h-12 flex-1 bg-transparent font-heading text-lg outline-none"
             aria-label="Search the shop"
           />
-          <button type="button" aria-label="Close search" onClick={() => setIsSearchOpen(false)}>
+          <button type="button" aria-label="Close search" onClick={close}>
             <IconClose className="h-5 w-5" />
           </button>
         </form>
@@ -60,7 +65,7 @@ export default function SearchOverlay() {
             <li key={product.id}>
               <Link
                 to={`/product/${product.id}`}
-                onClick={() => setIsSearchOpen(false)}
+                onClick={close}
                 className="flex items-center gap-4 py-3"
               >
                 <SafeImage src={product.image} alt="" className="h-14 w-14 object-cover" />

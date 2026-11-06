@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useShop } from '../../context/ShopContext';
+import { useShop } from '../../hooks/useShop';
 import { MOCK_SIGNIN_MESSAGE } from '../../config/brand';
 import { shellNav } from '../../config/nav';
 import { brand } from '../../config/brand';
@@ -9,6 +10,15 @@ import { IconChevron, IconClose, IconHome } from './icons';
 export default function MobileDrawer({ open, onClose }) {
   const { categories, currentUser, useMockData, logoutUser, openAuthModal } = useShop();
   const items = shellNav(categories);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
 
   const goAuth = (tab) => {
     onClose();

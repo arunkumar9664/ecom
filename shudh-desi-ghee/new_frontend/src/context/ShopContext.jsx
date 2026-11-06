@@ -1,16 +1,15 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ShopContext } from './shop-context';
 import toast from 'react-hot-toast';
 import api from '../services/api';
-import { brand, MOCK_DISABLED_MESSAGE, offlineDemo, paymentMethods, storageKeys, useMockData } from '../config/brand';
+import { brand, MAX_LINE_QUANTITY, MOCK_DISABLED_MESSAGE, offlineDemo, paymentMethods, storageKeys, useMockData } from '../config/brand';
 import { mockGet } from '../mocks/catalog';
 import { defaultSwatch, swatchFor } from '../utils/swatch';
 
-const ShopContext = createContext();
-
 const SECTION_KEYS = ['products', 'categories', 'hero', 'promo', 'settings', 'coupons'];
 
-function idleSections() {
-  return Object.fromEntries(SECTION_KEYS.map((key) => [key, { status: 'idle', error: null }]));
+function sectionState(status, error = null) {
+  return Object.fromEntries(SECTION_KEYS.map((key) => [key, { status, error }]));
 }
 
 function errorMessage(err, fallback) {
@@ -33,7 +32,7 @@ export const ShopProvider = ({ children }) => {
   const [promoMessages, setPromoMessages] = useState([]);
   const [discountCodes, setDiscountCodes] = useState([]);
   const [storeSettings, setStoreSettings] = useState(null);
-  const [sections, setSections] = useState(idleSections);
+  const [sections, setSections] = useState(() => sectionState('loading'));
   const [orders, setOrders] = useState([]);
   const [ordersError, setOrdersError] = useState(null);
   const [lastServerOrder, setLastServerOrder] = useState(null);
@@ -43,16 +42,18 @@ export const ShopProvider = ({ children }) => {
   const [authModalTab, setAuthModalTab] = useState('login');
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
 
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => readJson(storageKeys.guestCart, []));
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [wishlist, setWishlist] = useState([]);
+  const [wishlist, setWishlist] = useState(() => readJson(storageKeys.guestWishlist, []));
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const productsRef = useRef([]);
-  productsRef.current = products;
+  useEffect(() => {
+    productsRef.current = products;
+  }, [products]);
 
   const usesServerCart = Boolean(currentUser) && !offlineDemo && !useMockData;
 
@@ -83,7 +84,7 @@ export const ShopProvider = ({ children }) => {
     return updated;
   };
 
-  const loadCatalog = useCallback(async () => {
+  const loadCatalog = useCallback(async (options) => {
     if (!useMockData && offlineDemo) {
       const message = 'Offline demo is on. Live catalog is not loaded.';
       setProducts([]);
@@ -92,11 +93,11 @@ export const ShopProvider = ({ children }) => {
       setPromoMessages([]);
       setStoreSettings(null);
       setDiscountCodes([]);
-      setSections(Object.fromEntries(SECTION_KEYS.map((key) => [key, { status: 'error', error: message }])));
+      setSections(sectionState('error', message));
       return;
     }
 
-    setSections(Object.fromEntries(SECTION_KEYS.map((key) => [key, { status: 'loading', error: null }])));
+    if (!options?.quiet) setSections(sectionState('loading'));
 
     const get = useMockData ? mockGet : (path) => api.get(path);
     const jobs = [
@@ -147,21 +148,21 @@ export const ShopProvider = ({ children }) => {
     }
   }, [usesServerCart]);
 
-  useEffect(() => {
-    loadGuestCart();
-    loadGuestWishlist();
-    loadCatalog();
-  }, [loadCatalog]);
+  const catalogStamp = products.map((item) => item.id).join('|');
+  const [hydratedStamp, setHydratedStamp] = useState('');
+  if (catalogStamp && catalogStamp !== hydratedStamp) {
+    setHydratedStamp(catalogStamp);
+    setCart((prev) => prev.map((item) => {
+      const product = products.find((entry) => entry.id === item.product?.id) || item.product;
+      return { ...item, product, color: swatchFor(product, item.color?.name) };
+    }));
+  }
 
   useEffect(() => {
-    if (!products.length) return;
-    setCart((prev) =>
-      prev.map((item) => {
-        const product = products.find((entry) => entry.id === item.product?.id) || item.product;
-        return { ...item, product, color: swatchFor(product, item.color?.name) };
-      })
-    );
-  }, [products]);
+    // Mount-time catalog read. State updates run after the request, not as a render cascade.
+    // eslint-disable-next-line react/set-state-in-effect
+    loadCatalog({ quiet: true });
+  }, [loadCatalog]);
 
   useEffect(() => {
     const initUserSession = async () => {
@@ -187,28 +188,30 @@ export const ShopProvider = ({ children }) => {
 
   useEffect(() => {
     if (currentUser && !offlineDemo) {
+      // eslint-disable-next-line react/set-state-in-effect
       fetchUserCartAndWishlist();
     }
   }, [currentUser, fetchUserCartAndWishlist]);
 
-  const fetchUserOrders = async () => {
+  const fetchUserOrders = useCallback(async () => {
     if (offlineDemo || useMockData || !currentUser || currentUser.role === 'admin') return;
     try {
-      setOrdersError(null);
       const res = await api.get('/orders');
       setOrders(res.data?.orders || []);
+      setOrdersError(null);
     } catch (err) {
       const message = errorMessage(err, 'Could not load orders');
       setOrdersError(message);
       toast.error(message);
     }
-  };
+  }, [currentUser]);
 
   useEffect(() => {
     if (currentUser && currentUser.role !== 'admin' && !offlineDemo) {
+      // eslint-disable-next-line react/set-state-in-effect
       fetchUserOrders();
     }
-  }, [currentUser]);
+  }, [currentUser, fetchUserOrders]);
 
   const mergeGuestCart = async () => {
     const guestItems = readJson(storageKeys.guestCart, []);
@@ -401,7 +404,8 @@ export const ShopProvider = ({ children }) => {
   const updateQuantity = async (indexOrId, delta) => {
     const targetItem = cart[indexOrId] || cart.find((item) => item.id === indexOrId);
     if (!targetItem) return;
-    const newQty = targetItem.quantity + delta;
+    if (delta > 0 && targetItem.quantity >= MAX_LINE_QUANTITY) return;
+    const newQty = Math.min(MAX_LINE_QUANTITY, targetItem.quantity + delta);
 
     if (usesServerCart && targetItem.id && !String(targetItem.id).startsWith('local-')) {
       try {
@@ -565,7 +569,7 @@ export const ShopProvider = ({ children }) => {
     }
   }, [catalogGet]);
 
-  const fetchProductReviews = async (productId, page = 1, limit = 4) => {
+  const fetchProductReviews = useCallback(async (productId, page = 1, limit = 4) => {
     if (!useMockData && offlineDemo) {
       return { reviews: [], error: 'Offline demo is on. Reviews are not loaded.' };
     }
@@ -575,7 +579,7 @@ export const ShopProvider = ({ children }) => {
     } catch (err) {
       return { reviews: [], error: errorMessage(err, 'Could not load reviews') };
     }
-  };
+  }, [catalogGet]);
 
   const addOrder = async (orderData) => {
     if (useMockData) return refuseMock();
@@ -706,8 +710,3 @@ export const ShopProvider = ({ children }) => {
   );
 };
 
-export const useShop = () => {
-  const context = useContext(ShopContext);
-  if (!context) throw new Error('useShop must be used within a ShopProvider');
-  return context;
-};

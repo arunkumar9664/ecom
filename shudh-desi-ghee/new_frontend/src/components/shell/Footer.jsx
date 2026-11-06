@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useShop } from '../../context/ShopContext';
+import { useShop } from '../../hooks/useShop';
 import { storageKeys } from '../../config/brand';
 
 export default function Footer() {
@@ -21,7 +21,7 @@ export default function Footer() {
   return (
     <footer>
       <div className="bg-olive text-paper">
-        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mx-auto grid max-w-[1360px] gap-10 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-5 lg:px-8">
           <div>
             <p className="font-body text-[12px] tracking-[0.16em] uppercase">Shop</p>
             <ul className="mt-4 space-y-2 font-body text-sm text-sand">

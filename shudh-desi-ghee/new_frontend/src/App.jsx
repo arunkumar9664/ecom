@@ -1,40 +1,42 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from 'react-hot-toast';
-import { ShopProvider, useShop } from './context/ShopContext';
+import { ShopProvider } from './context/ShopContext';
 import { googleClientId } from './config/brand';
 import StoreShell from './components/shell/StoreShell';
 import HomePage from './pages/HomePage';
-import ListingPage from './pages/ListingPage';
-import ProductPage from './pages/ProductPage';
-import StubPage from './pages/StubPage';
-import CheckoutPage from './pages/CheckoutPage';
-import CartPage from './pages/CartPage';
-import AccountPage from './pages/AccountPage';
-import WishlistPage from './pages/WishlistPage';
-import TrackOrderPage from './pages/TrackOrderPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import AuthForm from './components/auth/AuthForm';
-import {
-  AboutPage, StoryPage, ContactPage, DeliveryPage, PrivacyPage, TermsPage, RefundPage, FaqPage, JournalPage, NotFoundPage,
-} from './pages/StaticPages';
 
-function LoginPage({ tab = 'login' }) {
-  const { currentUser } = useShop();
-  if (currentUser) return <Navigate to="/account" replace />;
-  return (
-    <main className="mx-auto max-w-md px-4 py-12">
-      <h1 className="font-heading text-4xl text-ink">{tab === 'register' ? 'Register' : 'Sign in'}</h1>
-      <div className="mt-6 bg-white p-6">
-        <AuthForm initialTab={tab} />
-      </div>
-    </main>
-  );
+const ListingPage = lazy(() => import('./pages/ListingPage'));
+const ProductPage = lazy(() => import('./pages/ProductPage'));
+const StubPage = lazy(() => import('./pages/StubPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const CartPage = lazy(() => import('./pages/CartPage'));
+const AccountPage = lazy(() => import('./pages/AccountPage'));
+const WishlistPage = lazy(() => import('./pages/WishlistPage'));
+const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+
+function named(loader, name) {
+  return lazy(() => loader().then((mod) => ({ default: mod[name] })));
 }
+
+const AboutPage = named(() => import('./pages/StaticPages'), 'AboutPage');
+const StoryPage = named(() => import('./pages/StaticPages'), 'StoryPage');
+const ContactPage = named(() => import('./pages/StaticPages'), 'ContactPage');
+const DeliveryPage = named(() => import('./pages/StaticPages'), 'DeliveryPage');
+const PrivacyPage = named(() => import('./pages/StaticPages'), 'PrivacyPage');
+const TermsPage = named(() => import('./pages/StaticPages'), 'TermsPage');
+const RefundPage = named(() => import('./pages/StaticPages'), 'RefundPage');
+const FaqPage = named(() => import('./pages/StaticPages'), 'FaqPage');
+const JournalPage = named(() => import('./pages/StaticPages'), 'JournalPage');
+const NotFoundPage = named(() => import('./pages/StaticPages'), 'NotFoundPage');
 
 function AppRoutes() {
   return (
     <StoreShell>
+      <Suspense fallback={<p className="px-6 py-16 font-body text-sm text-muted">Loading</p>}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/shop" element={<ListingPage />} />
@@ -68,6 +70,7 @@ function AppRoutes() {
         <Route path="/admin" element={<StubPage title="Admin" note="The existing admin screen is copied here in the last phase, without a restyle." />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </Suspense>
     </StoreShell>
   );
 }

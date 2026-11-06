@@ -17,11 +17,12 @@ export default function HeroCarousel({ slides, status, onRetry }) {
   const reduceMotion = usePrefersReducedMotion();
   const dragX = useRef(0);
   const count = items.length;
-  const current = items[index] || items[0];
-
-  useEffect(() => {
+  const [seenCount, setSeenCount] = useState(count);
+  if (seenCount !== count) {
+    setSeenCount(count);
     setIndex(0);
-  }, [count]);
+  }
+  const current = items[index] || items[0];
 
   useEffect(() => {
     if (paused || reduceMotion || count < 2) return undefined;
@@ -76,11 +77,12 @@ export default function HeroCarousel({ slides, status, onRetry }) {
         onPointerUp={onPointerUp}
       >
         {mobileImage ? (
-          <SafeImage src={mobileImage} alt="" className="h-full w-full object-cover object-center md:hidden" />
+          <SafeImage src={mobileImage} alt="" priority className="h-full w-full object-cover object-center md:hidden" />
         ) : null}
         <SafeImage
           src={current.image}
           alt=""
+          priority
           className={`h-full w-full object-cover object-center ${mobileImage ? 'hidden md:block' : ''}`}
         />
       </div>

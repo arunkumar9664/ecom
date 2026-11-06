@@ -1,6 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export default function useFocusTrap(open, nodeRef, onClose) {
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  }, [onClose]);
   useEffect(() => {
     if (!open) return undefined;
     const node = nodeRef.current;
@@ -11,7 +15,7 @@ export default function useFocusTrap(open, nodeRef, onClose) {
     const onKey = (event) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        onClose?.();
+        closeRef.current?.();
         return;
       }
       if (event.key !== 'Tab') return;
@@ -35,5 +39,5 @@ export default function useFocusTrap(open, nodeRef, onClose) {
       document.body.style.overflow = previousOverflow;
       previous?.focus?.();
     };
-  }, [open, nodeRef, onClose]);
+  }, [open, nodeRef]);
 }

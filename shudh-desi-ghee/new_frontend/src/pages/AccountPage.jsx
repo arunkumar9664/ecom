@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import api from '../services/api';
-import { useShop } from '../context/ShopContext';
-import { formatRupee } from '../components/shell/icons';
+import { useShop } from '../hooks/useShop';
+import { formatRupee } from '../utils/money';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const TABS = [
   { id: 'profile', label: 'Profile' },
@@ -33,40 +34,47 @@ export default function AccountPage({ initialTab = 'profile' }) {
   const [passwordError, setPasswordError] = useState('');
   const [passwordNote, setPasswordNote] = useState('');
 
-  useEffect(() => {
-    if (!currentUser) return;
-    fetchUserOrders?.();
-  }, [currentUser]);
+  useDocumentTitle(orderId ? `Order ${orderId}` : 'Account', 'Profile, addresses, and orders.');
+  const [seenOrder, setSeenOrder] = useState(orderId);
+  if (seenOrder !== orderId) {
+    setSeenOrder(orderId);
+    setOrderDetail(null);
+    setDetailError('');
+  }
 
   useEffect(() => {
     if (!currentUser) return undefined;
-    let cancelled = false;
-    setAddressState('loading');
+    fetchUserOrders?.();
+    return undefined;
+  }, [currentUser, fetchUserOrders]);
+
+  useEffect(() => {
+    if (!currentUser) return undefined;
+    const gate = { current: false };
     api.get('/addresses').then((res) => {
-      if (cancelled) return;
+      if (gate.current) return;
       setAddresses(res.data?.addresses || []);
       setAddressState('ready');
     }).catch((err) => {
-      if (cancelled) return;
+      if (gate.current) return;
       setAddressError(err?.response?.data?.message || 'Could not load addresses');
       setAddressState('error');
     });
     return () => {
-      cancelled = true;
+      gate.current = true;
     };
   }, [currentUser]);
 
   useEffect(() => {
     if (!orderId || !currentUser) return undefined;
-    let cancelled = false;
-    setDetailError('');
+    const gate = { current: false };
     api.get(`/orders/${orderId}`).then((res) => {
-      if (!cancelled) setOrderDetail(res.data?.order || null);
+      if (!gate.current) setOrderDetail(res.data?.order || null);
     }).catch((err) => {
-      if (!cancelled) setDetailError(err?.response?.data?.message || 'Could not load this order');
+      if (!gate.current) setDetailError(err?.response?.data?.message || 'Could not load this order');
     });
     return () => {
-      cancelled = true;
+      gate.current = true;
     };
   }, [orderId, currentUser]);
 

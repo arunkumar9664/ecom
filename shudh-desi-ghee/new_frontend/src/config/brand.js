@@ -25,7 +25,10 @@ export const storageKeys = {
   adminToken: 'fieldhearth_admin_token',
   adminAuth: 'fieldhearth_admin_auth',
   newsletterSession: 'fieldhearth_newsletter_session',
+  appliedCoupon: 'fieldhearth_applied_coupon',
 };
+
+export const MAX_LINE_QUANTITY = 10;
 
 export const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 export const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || '';

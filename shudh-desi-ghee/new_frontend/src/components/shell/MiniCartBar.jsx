@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useShop } from '../../context/ShopContext';
-import { formatRupee, IconBag } from './icons';
+import { useShop } from '../../hooks/useShop';
+import { IconBag } from './icons';
+import { formatRupee } from '../../utils/money';
 
 export default function MiniCartBar() {
   const { cartCount, cartSubtotal, shippingQuote } = useShop();

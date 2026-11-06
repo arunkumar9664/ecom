@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../services/api';
-import { useShop } from '../context/ShopContext';
+import { useShop } from '../hooks/useShop';
 import { MOCK_SIGNIN_MESSAGE } from '../config/brand';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 export default function ResetPasswordPage() {
   const { useMockData } = useShop();
   const [params] = useSearchParams();
   const token = params.get('token') || '';
+  useDocumentTitle('Reset password', 'Choose a new password for your Field & Hearth account.');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [note, setNote] = useState('');

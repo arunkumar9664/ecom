@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { useShop } from '../context/ShopContext';
+import { useShop } from '../hooks/useShop';
 import { brand, MOCK_DISABLED_MESSAGE, paymentMethods, razorpayKeyId } from '../config/brand';
-import { formatRupee } from '../components/shell/icons';
-import { readAppliedCoupon } from './CartPage';
+import useDocumentTitle from '../hooks/useDocumentTitle';
+import { formatRupee } from '../utils/money';
+import { clearAppliedCoupon, readAppliedCoupon } from '../utils/coupon';
 
 const phoneOk = (value) => /^[6-9]\d{9}$/.test(String(value || '').replace(/\D/g, ''));
 const emailOk = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -47,14 +48,15 @@ export default function CheckoutPage() {
   const [failure, setFailure] = useState('');
   const [placed, setPlaced] = useState(null);
   const [pending, setPending] = useState(null);
-  const coupon = readAppliedCoupon();
+  const coupon = readAppliedCoupon(cartSubtotal);
+  useDocumentTitle('Checkout', 'Contact, address, and payment for your Field & Hearth order.');
   const prepaidDisabled = !razorpayKeyId;
 
   useEffect(() => {
     if (!currentUser || useMockData) return undefined;
-    let cancelled = false;
+    const gate = { current: false };
     api.get('/addresses').then((res) => {
-      if (cancelled) return;
+      if (gate.current) return;
       const list = res.data?.addresses || [];
       setSaved(list);
       if (list.length) {
@@ -62,10 +64,10 @@ export default function CheckoutPage() {
         setSelectedAddress(list.find((entry) => entry.isDefault)?.id || list[0].id);
       }
     }).catch(() => {
-      if (!cancelled) setSaved([]);
+      if (!gate.current) setSaved([]);
     });
     return () => {
-      cancelled = true;
+      gate.current = true;
     };
   }, [currentUser, useMockData]);
 
@@ -106,7 +108,7 @@ export default function CheckoutPage() {
   const finish = async (order) => {
     setPlaced(order);
     setPending(null);
-    sessionStorage.removeItem('fieldhearth_applied_coupon');
+    clearAppliedCoupon();
     await clearCart();
   };
 

@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
-import { useShop } from '../context/ShopContext';
+import { useShop } from '../hooks/useShop';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import ProductCard from '../components/home/ProductCard';
 
 export default function WishlistPage() {
   const { wishlist, products, sections, toggleWishlist } = useShop();
   const items = products.filter((product) => wishlist.includes(product.id));
+  useDocumentTitle('Wishlist', 'Pieces you have saved at Field & Hearth.');
 
   return (
     <main className="mx-auto max-w-[1360px] px-4 py-8 md:px-8">

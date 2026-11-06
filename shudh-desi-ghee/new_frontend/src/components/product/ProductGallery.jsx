@@ -10,12 +10,15 @@ export default function ProductGallery({ images, name, saved, onWishlist }) {
   const [viewer, setViewer] = useState(false);
   const reduce = usePrefersReducedMotion();
   const dragX = useRef(0);
-  const photos = images.length ? images : [''];
-  const current = photos[Math.min(index, photos.length - 1)];
-
-  useEffect(() => {
+  const list = Array.isArray(images) ? images : [];
+  const imageKey = list.join('|');
+  const [seenKey, setSeenKey] = useState(imageKey);
+  if (seenKey !== imageKey) {
+    setSeenKey(imageKey);
     setIndex(0);
-  }, [images.join('|')]);
+  }
+  const photos = list.length ? list : [''];
+  const current = photos[Math.min(index, photos.length - 1)];
 
   useEffect(() => {
     if (!viewer) return undefined;

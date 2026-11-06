@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { useShop } from '../../context/ShopContext';
+import { useShop } from '../../hooks/useShop';
 import useFocusTrap from '../../hooks/useFocusTrap';
 import AuthForm from './AuthForm';
 

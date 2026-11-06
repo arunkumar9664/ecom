@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SafeImage from '../SafeImage';
-import { useShop } from '../../context/ShopContext';
-import { formatRupee } from '../shell/icons';
+import { useShop } from '../../hooks/useShop';
+import { formatRupee } from '../../utils/money';
 import { needsVariantPicker, variantChoices } from '../../utils/collections';
 import VariantPicker from './VariantPicker';
 
@@ -43,7 +43,7 @@ export default function ProductCard({ product }) {
         </button>
       </div>
       <div className="flex flex-1 flex-col px-1 pt-4">
-        <Link to={`/product/${product.id}`} className="font-heading text-xl leading-snug text-ink">
+        <Link to={`/product/${product.id}`} className="font-heading text-xl leading-snug break-words text-ink">
           {product.name}
         </Link>
         <p className="mt-1 truncate font-body text-sm text-muted">{product.description}</p>

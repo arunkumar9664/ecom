@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useShop } from '../../context/ShopContext';
+import { useShop } from '../../hooks/useShop';
 import AnnouncementBar from './AnnouncementBar';
 import Header from './Header';
 import NavBar from './NavBar';
@@ -18,13 +18,15 @@ export default function StoreShell({ children }) {
   const { useMockData, cartCount, setIsSearchOpen } = useShop();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [seenPath, setSeenPath] = useState(pathname);
   const isAdmin = pathname.startsWith('/admin');
 
-  useEffect(() => {
+  if (seenPath !== pathname) {
+    setSeenPath(pathname);
     setMenuOpen(false);
     setAccountOpen(false);
     setIsSearchOpen(false);
-  }, [pathname, setIsSearchOpen]);
+  }
 
   useEffect(() => {
     const locked = menuOpen || accountOpen;
@@ -63,8 +65,10 @@ export default function StoreShell({ children }) {
         <NavBar />
       </div>
       <MobileDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[80] focus:bg-paper focus:px-3 focus:py-2">Skip to content</a>
+      <p className="sr-only" aria-live="polite">{cartCount} {cartCount === 1 ? 'item' : 'items'} in the bag</p>
       <SearchOverlay />
-      {children}
+      <div id="content">{children}</div>
       <Footer />
       <FloatingActions />
       <MiniCartBar />

@@ -1,13 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { getImageUrl } from '../utils/image';
 
-export default function SafeImage({ src, alt = '', className = '', style }) {
+export default function SafeImage({ src, alt = '', className = '', style, priority = false, width, height }) {
   const resolved = getImageUrl(src);
-  const [failed, setFailed] = useState(!resolved);
-
-  useEffect(() => {
-    setFailed(!resolved);
-  }, [resolved]);
+  const [failedSrc, setFailedSrc] = useState('');
+  const failed = !resolved || failedSrc === resolved;
 
   if (failed) {
     return (
@@ -31,7 +28,11 @@ export default function SafeImage({ src, alt = '', className = '', style }) {
       alt={alt}
       className={className}
       style={style}
-      onError={() => setFailed(true)}
+      width={width}
+      height={height}
+      loading={priority ? 'eager' : 'lazy'}
+      decoding="async"
+      onError={() => setFailedSrc(resolved)}
     />
   );
 }

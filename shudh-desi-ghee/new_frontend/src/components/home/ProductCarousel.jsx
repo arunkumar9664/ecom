@@ -51,20 +51,24 @@ export default function ProductCarousel({ title, products, href, status, onRetry
         <p className="py-8 text-center font-body text-sm text-muted">Nothing in this row yet.</p>
       ) : null}
       {status?.status === 'ready' && items.length ? (
-        <div className="relative">
-          <button type="button" aria-label={`Previous ${title}`} onClick={() => scrollByCard(-1)} className="absolute top-1/3 -left-2 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-line bg-paper text-ink md:flex">
-            <IconChevron className="h-4 w-4 rotate-180" />
-          </button>
+        <div className="relative mx-auto max-w-[1360px]">
+          {items.length > 1 ? (
+            <button type="button" aria-label={`Previous ${title}`} onClick={() => scrollByCard(-1)} className="absolute top-1/3 -left-2 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-line bg-paper text-ink md:flex">
+              <IconChevron className="h-4 w-4 rotate-180" />
+            </button>
+          ) : null}
           <div ref={scroller} className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2">
             {items.map((product) => (
-              <div key={product.id} className="w-[72%] shrink-0 snap-start md:w-[calc((100%-2rem)/3)]">
+              <div key={product.id} className={`shrink-0 snap-start ${items.length === 1 ? 'w-full md:w-[calc((100%-2rem)/3)]' : 'w-[72%] md:w-[calc((100%-2rem)/3)]'}`}>
                 <ProductCard product={product} />
               </div>
             ))}
           </div>
-          <button type="button" aria-label={`Next ${title}`} onClick={() => scrollByCard(1)} className="absolute top-1/3 -right-2 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-line bg-paper text-ink md:flex">
-            <IconChevron className="h-4 w-4" />
-          </button>
+          {items.length > 1 ? (
+            <button type="button" aria-label={`Next ${title}`} onClick={() => scrollByCard(1)} className="absolute top-1/3 -right-2 z-10 hidden h-10 w-10 items-center justify-center rounded-full border border-line bg-paper text-ink md:flex">
+              <IconChevron className="h-4 w-4" />
+            </button>
+          ) : null}
         </div>
       ) : null}
 

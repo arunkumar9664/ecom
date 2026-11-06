@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { labels } from '../config/labels';
-import { brand } from '../config/brand';
-import { useShop } from '../context/ShopContext';
+import { brand, MAX_LINE_QUANTITY } from '../config/brand';
+import { useShop } from '../hooks/useShop';
 import { variantChoices } from '../utils/collections';
-import { formatRupee } from '../components/shell/icons';
+import { formatRupee } from '../utils/money';
 import ProductGallery from '../components/product/ProductGallery';
 import ReviewSection from '../components/product/ReviewSection';
 import ProductCarousel from '../components/home/ProductCarousel';
@@ -50,14 +50,19 @@ export default function ProductPage() {
   const [openPanels, setOpenPanels] = useState({ description: true });
   const [descOpen, setDescOpen] = useState(false);
   const addRef = useRef(null);
-
-  useEffect(() => {
-    let cancelled = false;
+  const [loadedId, setLoadedId] = useState('');
+  if (loadedId !== id) {
+    setLoadedId(id);
     setStatus('loading');
     setProduct(null);
     setMissing(false);
+    setError('');
+  }
+
+  useEffect(() => {
+    const gate = { current: false };
     fetchProduct(id).then((result) => {
-      if (cancelled) return;
+      if (gate.current) return;
       if (result.error) {
         setError(result.error);
         setStatus('error');
@@ -77,7 +82,7 @@ export default function ProductPage() {
       setStatus('ready');
     });
     return () => {
-      cancelled = true;
+      gate.current = true;
     };
   }, [id, fetchProduct]);
 
@@ -91,23 +96,17 @@ export default function ProductPage() {
   }, [product]);
 
   useEffect(() => {
-    if (!product) return undefined;
-    let cancelled = false;
-    const apply = (list) => {
-      if (cancelled) return;
-      setRelated(list.filter((item) => item.id !== product.id).slice(0, 12));
-    };
-    if (product.categorySlug) {
-      queryProducts({ categorySlug: product.categorySlug }).then((result) => {
-        const list = result.products || [];
-        if (list.filter((item) => item.id !== product.id).length) apply(list);
-        else apply(products || []);
-      });
-    } else {
-      apply(products || []);
-    }
+    if (!product?.categorySlug) return undefined;
+    const gate = { current: false };
+    queryProducts({ categorySlug: product.categorySlug }).then((result) => {
+      if (gate.current) return;
+      const list = result.products || [];
+      const siblings = list.filter((item) => item.id !== product.id);
+      const source = siblings.length ? list : (products || []);
+      setRelated(source.filter((item) => item.id !== product.id).slice(0, 12));
+    });
     return () => {
-      cancelled = true;
+      gate.current = true;
     };
   }, [product, queryProducts, products]);
 
@@ -154,7 +153,7 @@ export default function ProductPage() {
 
   if (status === 'loading') {
     return (
-      <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-2 md:px-8">
+      <main className="mx-auto grid max-w-[1360px] gap-8 px-4 py-10 md:grid-cols-2 md:px-8">
         <div className="aspect-square animate-pulse bg-sand motion-reduce:animate-none" />
         <div className="space-y-4">
           <div className="h-10 w-2/3 animate-pulse bg-sand motion-reduce:animate-none" />
@@ -220,7 +219,7 @@ export default function ProductPage() {
           {product.badge ? (
             <p className="font-body text-[11px] font-bold tracking-[0.14em] text-ink uppercase">{product.badge}</p>
           ) : null}
-          <h1 className="font-heading text-[clamp(28px,2.6vw,40px)] leading-[1.5] font-normal text-ink">{product.name}</h1>
+          <h1 className="font-heading text-[clamp(28px,2.6vw,40px)] leading-[1.5] font-normal break-words text-ink">{product.name}</h1>
           {product.description ? (
             <p className="mt-1 truncate font-body text-sm font-medium text-ink">{product.description}</p>
           ) : null}
@@ -301,7 +300,7 @@ export default function ProductPage() {
             <div className="inline-flex border border-line">
               <button type="button" aria-label="Decrease quantity" className="h-11 w-11 font-bold" onClick={() => setQuantity((value) => Math.max(1, value - 1))}>−</button>
               <span className="flex h-11 w-12 items-center justify-center font-body text-sm" aria-live="polite">{quantity}</span>
-              <button type="button" aria-label="Increase quantity" className="h-11 w-11 font-bold" onClick={() => setQuantity((value) => Math.min(10, value + 1))}>+</button>
+              <button type="button" aria-label="Increase quantity" className="h-11 w-11 font-bold" onClick={() => setQuantity((value) => Math.min(MAX_LINE_QUANTITY, value + 1))}>+</button>
             </div>
           </div>
 
@@ -356,7 +355,7 @@ export default function ProductPage() {
       <ReviewSection productId={product.id} />
       <ProductCarousel
         title="You may also like"
-        products={related}
+        products={related.length ? related : (products || []).filter((item) => item.id !== product.id).slice(0, 12)}
         href={product.categorySlug ? `/category/${product.categorySlug}` : '/shop'}
         status={{ status: 'ready' }}
       />

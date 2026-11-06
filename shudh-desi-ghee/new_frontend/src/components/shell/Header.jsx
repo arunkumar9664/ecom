@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { brand } from '../../config/brand';
-import { useShop } from '../../context/ShopContext';
+import { useShop } from '../../hooks/useShop';
 import AccountDropdown from './AccountDropdown';
 import { IconBag, IconMenu, IconSearch, IconUser } from './icons';
 

@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { brand, storageKeys } from '../../config/brand';
 import { catalogImages } from '../../config/media';
 import SafeImage from '../SafeImage';
 import { IconClose } from './icons';
+import useFocusTrap from '../../hooks/useFocusTrap';
 
 export default function WelcomePopup() {
   const [open, setOpen] = useState(false);
+  const panel = useRef(null);
   const [email, setEmail] = useState('');
   const [done, setDone] = useState(false);
 
@@ -20,11 +22,14 @@ export default function WelcomePopup() {
     setOpen(false);
   };
 
+  useFocusTrap(open, panel, close);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/35 px-4" role="dialog" aria-labelledby="welcome-title">
-      <div className="relative w-full max-w-md border border-line bg-paper px-6 py-8 text-center shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+      <button type="button" className="absolute inset-0 bg-ink/35" aria-label="Close" onClick={close} />
+      <div ref={panel} className="relative w-full max-w-md border border-line bg-paper px-6 py-8 text-center shadow-xl">
         <button type="button" aria-label="Close" onClick={close} className="absolute top-3 right-3 p-2">
           <IconClose className="h-5 w-5" />
         </button>

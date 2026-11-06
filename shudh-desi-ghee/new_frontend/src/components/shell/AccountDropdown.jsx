@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useShop } from '../../context/ShopContext';
+import { useShop } from '../../hooks/useShop';
 import { MOCK_SIGNIN_MESSAGE, brand } from '../../config/brand';
 import { IconBag, IconHeart, IconOut, IconTruck, IconUser } from './icons';
 

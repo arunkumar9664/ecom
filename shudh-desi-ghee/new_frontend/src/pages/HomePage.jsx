@@ -1,4 +1,6 @@
-import { useShop } from '../context/ShopContext';
+import { useShop } from '../hooks/useShop';
+import useDocumentTitle from '../hooks/useDocumentTitle';
+import { brand } from '../config/brand';
 import { bestsellerSelection, giftingSelection } from '../utils/collections';
 import HeroCarousel from '../components/home/HeroCarousel';
 import CategoryTiles from '../components/home/CategoryTiles';
@@ -12,6 +14,7 @@ export default function HomePage() {
   const gifts = giftingSelection(products, categories);
   const best = bestsellerSelection(products);
   const arrivals = (products || []).slice(0, 12);
+  useDocumentTitle('', brand.tagline);
 
   return (
     <main>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useShop } from '../../context/ShopContext';
+import { useShop } from '../../hooks/useShop';
 
 function isGenericShipping(message) {
   return /free (shipping|dispatch|delivery)/i.test(message) && !/₹|\brs\.?\s*\d/i.test(message);
@@ -18,9 +18,7 @@ export default function AnnouncementBar() {
     return shippingLine ? [shippingLine] : [];
   });
 
-  useEffect(() => {
-    setIndex(0);
-  }, [messages.length]);
+  const safeIndex = messages.length ? index % messages.length : 0;
 
   useEffect(() => {
     if (messages.length < 2) return undefined;
@@ -34,7 +32,7 @@ export default function AnnouncementBar() {
 
   const text = sections.promo.status === 'error'
     ? sections.promo.error
-    : messages[index] || (sections.promo.status === 'loading' ? 'Loading announcements' : '');
+    : messages[safeIndex] || (sections.promo.status === 'loading' ? 'Loading announcements' : '');
 
   if (!text) return null;
 
