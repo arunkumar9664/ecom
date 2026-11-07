@@ -5,8 +5,8 @@ export const labels = {
   description: 'Description',
   ingredients: 'Ingredients',
   howToUse: 'How to use',
-  craft: 'Craft',
-  shipping: 'Shipping',
+  craft: 'Made by hand',
+  shipping: 'Shipping and returns',
 };
 
 export const fieldToLabel = {

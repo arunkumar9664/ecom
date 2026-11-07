@@ -2,12 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { labels } from '../config/labels';
 import { brand, MAX_LINE_QUANTITY } from '../config/brand';
+import { highlights, trustNotes } from '../content/siteCopy';
 import { useShop } from '../hooks/useShop';
+import useRecentlyViewed from '../hooks/useRecentlyViewed';
+import { usePrefersReducedMotion } from '../hooks/useMediaQuery';
 import { variantChoices } from '../utils/collections';
 import { formatRupee } from '../utils/money';
 import ProductGallery from '../components/product/ProductGallery';
 import ReviewSection from '../components/product/ReviewSection';
 import ProductCarousel from '../components/home/ProductCarousel';
+import Reveal from '../components/ui/Reveal';
+import { IconBox, IconHands, IconLeaf, IconLock } from '../components/ui/illustrations';
 
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
@@ -36,7 +41,7 @@ function Stars({ value }) {
 export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { fetchProduct, addToCart, toggleWishlist, isInWishlist, queryProducts, products, sections, storeSettings, cartCount } = useShop();
+  const { fetchProduct, addToCart, toggleWishlist, isInWishlist, queryProducts, products, storeSettings, cartCount, shippingQuote, isCartOpen } = useShop();
   const [product, setProduct] = useState(null);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
@@ -50,6 +55,9 @@ export default function ProductPage() {
   const [openPanels, setOpenPanels] = useState({ description: true });
   const [descOpen, setDescOpen] = useState(false);
   const addRef = useRef(null);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const reduceMotion = usePrefersReducedMotion();
+  const recentIds = useRecentlyViewed(product?.id);
   const [loadedId, setLoadedId] = useState('');
   if (loadedId !== id) {
     setLoadedId(id);
@@ -102,7 +110,8 @@ export default function ProductPage() {
       if (gate.current) return;
       const list = result.products || [];
       const siblings = list.filter((item) => item.id !== product.id);
-      const source = siblings.length ? list : (products || []);
+      const newest = [...(products || [])].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      const source = siblings.length ? siblings : newest;
       setRelated(source.filter((item) => item.id !== product.id).slice(0, 12));
     });
     return () => {
@@ -120,13 +129,24 @@ export default function ProductPage() {
     return () => observer.disconnect();
   }, [product?.id, status]);
 
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return undefined;
+    const check = () => setKeyboardOpen(viewport.height < window.innerHeight * 0.75);
+    check();
+    viewport.addEventListener('resize', check);
+    return () => viewport.removeEventListener('resize', check);
+  }, []);
+
   const choices = product ? variantChoices(product) : { colors: [], sizes: [] };
   const images = useMemo(() => (product ? galleryImages(product, colorName) : []), [product, colorName]);
   const saved = product ? isInWishlist(product.id) : false;
 
-  const shippingLine = sections.settings.status === 'ready' && storeSettings
-    ? `Dispatch is ₹${Number(storeSettings.shippingFee || 0).toLocaleString('en-IN')} and free once the order reaches ₹${Number(storeSettings.freeShippingThreshold || 0).toLocaleString('en-IN')}.`
+  const shippingLine = shippingQuote?.known
+    ? `Dispatch is ₹${Number(storeSettings.shippingFee || 0).toLocaleString('en-IN')}, and free once the order reaches ₹${Number(storeSettings.freeShippingThreshold || 0).toLocaleString('en-IN')}.`
     : 'Shipping calculated at checkout';
+  const trustIcon = { hands: IconHands, leaf: IconLeaf, lock: IconLock, box: IconBox };
+  const recentProducts = recentIds.map((entry) => (products || []).find((item) => item.id === entry)).filter(Boolean);
 
   const commit = async (buyNow) => {
     if (!product || product.isSoldOut) return;
@@ -147,8 +167,8 @@ export default function ProductPage() {
     { id: 'description', title: labels.description, body: product.description },
     { id: 'ingredients', title: labels.ingredients, body: product.fabric },
     { id: 'use', title: labels.howToUse, body: product.care },
-    { id: 'craft', title: 'Made by hand', body: product.craftsmanship },
-    { id: 'shipping', title: 'Shipping and returns', body: product.shipping },
+    { id: 'craft', title: labels.craft, body: product.craftsmanship },
+    { id: 'shipping', title: labels.shipping, body: product.shipping },
   ].filter((panel) => String(panel.body || '').trim()) : [];
 
   if (status === 'loading') {
@@ -224,13 +244,19 @@ export default function ProductPage() {
             <p className="mt-1 truncate font-body text-sm font-medium text-ink">{product.description}</p>
           ) : null}
           <p className="mt-4 font-body text-sm text-muted">
-            {product.reviewCount > 0 ? (
-              <>
-                <Stars value={product.averageRating} />
-                <span className="sr-only">{product.averageRating} out of 5, {product.reviewCount} reviews</span>
-                <span className="ml-2">{product.averageRating} · {product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'}</span>
-              </>
-            ) : 'No reviews yet'}
+            <button
+              type="button"
+              className="text-left"
+              onClick={() => document.getElementById('reviews')?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' })}
+            >
+              {product.reviewCount > 0 ? (
+                <>
+                  <Stars value={product.averageRating} />
+                  <span className="sr-only">{product.averageRating} out of 5, {product.reviewCount} reviews</span>
+                  <span className="ml-2">{product.averageRating} · {product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'}</span>
+                </>
+              ) : 'No reviews yet'}
+            </button>
           </p>
           <p className="mt-4 font-body text-sm text-ink">
             <span className="font-bold">{brand.origin.label}</span>
@@ -307,60 +333,93 @@ export default function ProductPage() {
           {choiceError ? <p className="mt-4 font-body text-sm text-terracotta" role="alert">{choiceError}</p> : null}
           {product.isSoldOut ? <p className="mt-4 font-body text-sm text-terracotta">Sold out</p> : null}
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <button ref={addRef} type="button" disabled={product.isSoldOut} onClick={() => commit(false)} className="h-12 flex-1 border border-ink font-body text-xs tracking-[0.16em] text-ink uppercase disabled:border-line disabled:text-muted">
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <button ref={addRef} type="button" disabled={product.isSoldOut} onClick={() => commit(false)} className="h-12 border border-ink font-body text-xs tracking-[0.14em] text-ink uppercase disabled:border-line disabled:text-muted">
               {product.isSoldOut ? 'Sold out' : 'Add to Bag'}
             </button>
-            <button type="button" disabled={product.isSoldOut} onClick={() => commit(true)} className="h-12 flex-1 bg-olive font-body text-xs tracking-[0.16em] text-paper uppercase disabled:bg-line">
-              Buy now
+            <button type="button" disabled={product.isSoldOut} onClick={() => commit(true)} className="h-12 bg-olive font-body text-xs tracking-[0.14em] text-paper uppercase disabled:bg-line">
+              {product.isSoldOut ? 'Sold out' : 'Buy Now'}
             </button>
           </div>
+          <button
+            type="button"
+            aria-pressed={saved}
+            onClick={() => toggleWishlist(product.id)}
+            className="mt-3 h-11 w-full border border-line font-body text-xs tracking-[0.14em] text-ink uppercase"
+          >
+            {saved ? 'Saved to wishlist' : 'Save to wishlist'}
+          </button>
 
           <p className="mt-6 font-body text-sm text-muted">{shippingLine}</p>
-          <ul className="mt-6 grid grid-cols-3 gap-3 text-center">
-            {[
-              ['Handmade', 'Mixed, poured, or stitched in short runs'],
-              ['Gentle ingredients', 'Named on the piece, nothing hidden'],
-              ['Secure payment', 'Prepaid or cash on delivery'],
-            ].map(([title, note]) => (
-              <li key={title} className="border border-line px-2 py-3">
-                <p className="font-body text-xs font-semibold tracking-[0.08em] text-ink uppercase">{title}</p>
-                <p className="mt-1 font-body text-[11px] leading-snug text-muted">{note}</p>
-              </li>
-            ))}
+          <ul className="mt-6 grid grid-cols-1 gap-4 text-center min-[700px]:grid-cols-3">
+            {trustNotes.map((note) => {
+              const Icon = trustIcon[note.icon] || IconLeaf;
+              return (
+                <li key={note.title} className="px-1 py-2">
+                  <Icon className="mx-auto h-6 w-6 text-olive" />
+                  <p className="mt-2 font-body text-[11px] font-semibold tracking-[0.06em] text-ink uppercase">{note.title}</p>
+                  <p className="mt-1 font-body text-[11px] leading-snug text-muted">{note.text}</p>
+                </li>
+              );
+            })}
           </ul>
+
+          <div className="mt-8 border-t border-line">
+            {panels.map((panel) => {
+              const open = Boolean(openPanels[panel.id]);
+              return (
+                <div key={panel.id} className="border-b border-line">
+                  <button
+                    type="button"
+                    aria-expanded={open}
+                    onClick={() => setOpenPanels((current) => ({ ...current, [panel.id]: !current[panel.id] }))}
+                    className="flex min-h-11 w-full items-center justify-between py-4 text-left font-heading text-2xl text-ink"
+                  >
+                    {panel.title}
+                    <span aria-hidden="true" className="font-body text-lg">{open ? '−' : '+'}</span>
+                  </button>
+                  <div className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                    <div className="overflow-hidden">
+                      <p className="pb-4 font-body text-sm leading-relaxed text-muted">{panel.body}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-3xl px-4 pb-8 md:px-8">
-        {panels.map((panel) => {
-          const open = Boolean(openPanels[panel.id]);
-          return (
-            <div key={panel.id} className="border-b border-line">
-              <button
-                type="button"
-                aria-expanded={open}
-                onClick={() => setOpenPanels((current) => ({ ...current, [panel.id]: !current[panel.id] }))}
-                className="flex w-full items-center justify-between py-4 text-left font-heading text-2xl text-ink"
-              >
-                {panel.title}
-                <span aria-hidden="true" className="font-body text-lg">{open ? '−' : '+'}</span>
-              </button>
-              {open ? <p className="pb-4 font-body text-sm leading-relaxed text-muted">{panel.body}</p> : null}
-            </div>
-          );
-        })}
-      </div>
+      <Reveal>
+        <section aria-label="Why you will love it" className="bg-sand px-4 py-12 md:px-8">
+          <h2 className="text-center font-heading text-3xl text-ink">Why you will love it</h2>
+          <ul className="mx-auto mt-8 grid max-w-[1100px] gap-4 md:grid-cols-3">
+            {highlights.map((item) => {
+              const Icon = trustIcon[item.icon] || IconLeaf;
+              return (
+                <li key={item.title} className="rounded-[4px] bg-paper px-5 py-6 text-center shadow-[0_8px_30px_rgba(43,38,32,0.05)]">
+                  <Icon className="mx-auto h-7 w-7 text-olive" />
+                  <p className="mt-3 font-heading text-xl text-ink">{item.title}</p>
+                  <p className="mt-2 font-body text-sm text-muted">{item.text}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      </Reveal>
 
-      <ReviewSection productId={product.id} />
+      <ReviewSection productId={product.id} averageRating={product.averageRating} reviewCount={product.reviewCount} />
       <ProductCarousel
         title="You may also like"
-        products={related.length ? related : (products || []).filter((item) => item.id !== product.id).slice(0, 12)}
+        products={related}
         href={product.categorySlug ? `/category/${product.categorySlug}` : '/shop'}
         status={{ status: 'ready' }}
       />
+      {recentProducts.length >= 2 ? (
+        <ProductCarousel title="Recently viewed" products={recentProducts} href="/shop" status={{ status: 'ready' }} />
+      ) : null}
 
-      {showBar && !product.isSoldOut ? (
+      {showBar && !product.isSoldOut && !isCartOpen && !keyboardOpen ? (
         <div className={`fixed inset-x-0 z-40 flex items-center justify-between gap-3 border-t border-line bg-paper px-4 py-3 md:hidden ${cartCount ? 'bottom-16' : 'bottom-0'}`}>
           <p className="font-body text-sm font-bold text-ink">{formatRupee(product.price)}</p>
           <button type="button" onClick={() => commit(false)} className="h-11 flex-1 border border-ink font-body text-xs tracking-[0.14em] text-ink uppercase">

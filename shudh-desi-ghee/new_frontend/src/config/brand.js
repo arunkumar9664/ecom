@@ -26,6 +26,8 @@ export const storageKeys = {
   adminAuth: 'fieldhearth_admin_auth',
   newsletterSession: 'fieldhearth_newsletter_session',
   appliedCoupon: 'fieldhearth_applied_coupon',
+  recentlyViewed: 'fieldhearth_recently_viewed',
+  lastOrder: 'fieldhearth_last_order',
 };
 
 export const MAX_LINE_QUANTITY = 10;

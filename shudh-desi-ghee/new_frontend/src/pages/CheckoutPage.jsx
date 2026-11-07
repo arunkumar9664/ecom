@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useShop } from '../hooks/useShop';
-import { brand, MOCK_DISABLED_MESSAGE, paymentMethods, razorpayKeyId } from '../config/brand';
+import { brand, MOCK_DISABLED_MESSAGE, paymentMethods, razorpayKeyId, storageKeys } from '../config/brand';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { formatRupee } from '../utils/money';
 import SafeImage from '../components/SafeImage';
@@ -33,6 +33,7 @@ function loadRazorpay() {
 const emptyAddress = { fullName: '', phone: '', street: '', city: '', state: '', pincode: '' };
 
 export default function CheckoutPage() {
+  const navigate = useNavigate();
   const { cart, cartSubtotal, currentUser, useMockData, shippingQuote, addOrder, clearCart, paymentMethods: methods } = useShop();
   const nameParts = String(currentUser?.name || '').trim().split(/\s+/);
   const [step, setStep] = useState('shipping');
@@ -116,6 +117,12 @@ export default function CheckoutPage() {
     setPending(null);
     clearAppliedCoupon();
     await clearCart();
+    try {
+      sessionStorage.setItem(storageKeys.lastOrder, JSON.stringify(order));
+    } catch {
+      /* the confirmation still travels in router state */
+    }
+    navigate('/order-success', { replace: true, state: { order } });
   };
 
   const payPrepaid = async (created, key) => {
@@ -206,29 +213,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (placed) {
-    return (
-      <main className="mx-auto max-w-2xl px-4 py-12 md:px-8">
-        <h1 className="font-heading text-4xl text-ink">Order placed</h1>
-        <p className="mt-3 font-body text-sm text-muted">Order {placed.id}</p>
-        <p className="mt-2 font-body text-sm text-ink">Total {formatRupee(placed.total)}</p>
-        <p className="mt-1 font-body text-sm text-ink">{placed.paymentMethod}</p>
-        <ul className="mt-6 divide-y divide-line border-y border-line">
-          {(placed.items || []).map((item, index) => (
-            <li key={`${item.id || item.productId}-${index}`} className="flex justify-between py-3 font-body text-sm">
-              <span>{item.name || item.productName || 'Item'} × {item.quantity}</span>
-              <span>{item.price ? formatRupee(item.price * item.quantity) : ''}</span>
-            </li>
-          ))}
-        </ul>
-        {currentUser ? (
-          <Link to="/orders" className="mt-8 inline-flex h-11 items-center bg-olive px-5 font-body text-xs tracking-[0.14em] text-paper uppercase">View orders</Link>
-        ) : (
-          <Link to="/shop" className="mt-8 inline-flex h-11 items-center bg-olive px-5 font-body text-xs tracking-[0.14em] text-paper uppercase">Continue shopping</Link>
-        )}
-      </main>
-    );
-  }
+  if (placed) return null;
 
   const placeAddress = chosenAddress();
   const addressLine = placeAddress

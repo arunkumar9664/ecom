@@ -99,17 +99,20 @@ export default function ProductGallery({ images, name, saved, onWishlist }) {
           </div>
         </div>
         {photos.length > 1 ? (
-          <div className="mt-3 flex justify-center gap-2 md:hidden">
-            {photos.map((src, dot) => (
-              <button
-                key={`${src}-dot-${dot}`}
-                type="button"
-                aria-label={`Show image ${dot + 1}`}
-                aria-current={dot === index ? 'true' : undefined}
-                onClick={() => setIndex(dot)}
-                className={`h-2 rounded-full ${dot === index ? 'w-6 bg-terracotta' : 'w-2 bg-line'}`}
-              />
-            ))}
+          <div className="mt-3 flex items-center justify-center gap-3 md:hidden">
+            <div className="flex gap-2">
+              {photos.map((src, dot) => (
+                <button
+                  key={`${src}-dot-${dot}`}
+                  type="button"
+                  aria-label={`Show image ${dot + 1}`}
+                  aria-current={dot === index ? 'true' : undefined}
+                  onClick={() => setIndex(dot)}
+                  className={`h-2 rounded-full ${dot === index ? 'w-6 bg-terracotta' : 'w-2 bg-line'}`}
+                />
+              ))}
+            </div>
+            <p className="font-body text-xs tracking-[0.12em] text-muted" aria-live="polite">{index + 1} / {photos.length}</p>
           </div>
         ) : null}
       </div>

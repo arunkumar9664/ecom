@@ -59,7 +59,7 @@ export default function ProductCarousel({ title, products, href, status, onRetry
               <IconChevron className="h-4 w-4 rotate-180" />
             </button>
           ) : null}
-          <div ref={scroller} onClickCapture={swallowClick} className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2">
+          <div ref={scroller} onClickCapture={swallowClick} className="flex snap-x snap-proximity gap-4 overflow-x-auto overscroll-x-contain pb-2">
             {items.map((product) => (
               <div key={product.id} className="w-[70%] shrink-0 snap-start min-[1000px]:w-[calc((100%-2rem)/3)]">
                 <ProductCard product={product} />

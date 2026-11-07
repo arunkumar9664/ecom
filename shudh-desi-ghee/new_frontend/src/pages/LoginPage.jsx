@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import api from '../services/api';
 import { useShop } from '../hooks/useShop';
@@ -25,8 +25,11 @@ export default function LoginPage({ tab = 'login' }) {
   const [notice, setNotice] = useState('');
   const [fields, setFields] = useState({ name: '', email: '', phone: '', password: '' });
   const [invalid, setInvalid] = useState({});
+  const [params] = useSearchParams();
   useDocumentTitle(register ? 'Register' : 'Sign in', 'Sign in to Field & Hearth.');
-  if (currentUser) return <Navigate to="/account" replace />;
+  const next = params.get('next');
+  const dest = next && next.startsWith('/') && !next.startsWith('//') ? next : '/account';
+  if (currentUser) return <Navigate to={dest} replace />;
 
   const set = (key) => (event) => {
     setFields((current) => ({ ...current, [key]: event.target.value }));

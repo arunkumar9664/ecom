@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from 'react-hot-toast';
 import { ShopProvider } from './context/ShopContext';
@@ -12,7 +12,14 @@ const ProductPage = lazy(() => import('./pages/ProductPage'));
 const StubPage = lazy(() => import('./pages/StubPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const CartPage = lazy(() => import('./pages/CartPage'));
-const AccountPage = lazy(() => import('./pages/AccountPage'));
+const AccountLayout = lazy(() => import('./pages/account/AccountLayout'));
+const AccountOverview = lazy(() => import('./pages/account/AccountOverview'));
+const AccountProfile = lazy(() => import('./pages/account/AccountProfile'));
+const AccountOrders = lazy(() => import('./pages/account/AccountOrders'));
+const AccountOrderDetail = lazy(() => import('./pages/account/AccountOrderDetail'));
+const AccountAddresses = lazy(() => import('./pages/account/AccountAddresses'));
+const AccountPassword = lazy(() => import('./pages/account/AccountPassword'));
+const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 const WishlistPage = lazy(() => import('./pages/WishlistPage'));
 const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
@@ -33,6 +40,11 @@ const FaqPage = named(() => import('./pages/StaticPages'), 'FaqPage');
 const JournalPage = named(() => import('./pages/StaticPages'), 'JournalPage');
 const NotFoundPage = named(() => import('./pages/StaticPages'), 'NotFoundPage');
 
+function OrderAlias() {
+  const { id } = useParams();
+  return <Navigate to={id ? `/account/orders/${id}` : '/account/orders'} replace />;
+}
+
 function AppRoutes() {
   return (
     <StoreShell>
@@ -47,9 +59,17 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<LoginPage tab="register" />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/account" element={<AccountPage />} />
-        <Route path="/orders" element={<AccountPage initialTab="orders" />} />
-        <Route path="/orders/:id" element={<AccountPage initialTab="orders" />} />
+        <Route path="/order-success" element={<OrderSuccessPage />} />
+        <Route path="/account" element={<AccountLayout />}>
+          <Route index element={<AccountOverview />} />
+          <Route path="profile" element={<AccountProfile />} />
+          <Route path="orders" element={<AccountOrders />} />
+          <Route path="orders/:id" element={<AccountOrderDetail />} />
+          <Route path="addresses" element={<AccountAddresses />} />
+          <Route path="password" element={<AccountPassword />} />
+        </Route>
+        <Route path="/orders" element={<Navigate to="/account/orders" replace />} />
+        <Route path="/orders/:id" element={<OrderAlias />} />
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/track-order" element={<TrackOrderPage />} />
         <Route path="/about" element={<AboutPage />} />

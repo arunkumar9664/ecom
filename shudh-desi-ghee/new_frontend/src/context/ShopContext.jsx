@@ -34,6 +34,7 @@ export const ShopProvider = ({ children }) => {
   const [storeSettings, setStoreSettings] = useState(null);
   const [sections, setSections] = useState(() => sectionState('loading'));
   const [orders, setOrders] = useState([]);
+  const [ordersStatus, setOrdersStatus] = useState('idle');
   const [ordersError, setOrdersError] = useState(null);
   const [lastServerOrder, setLastServerOrder] = useState(null);
 
@@ -194,14 +195,20 @@ export const ShopProvider = ({ children }) => {
   }, [currentUser, fetchUserCartAndWishlist]);
 
   const fetchUserOrders = useCallback(async () => {
-    if (offlineDemo || useMockData || !currentUser || currentUser.role === 'admin') return;
+    if (offlineDemo || useMockData || !currentUser || currentUser.role === 'admin') {
+      setOrdersStatus('ready');
+      return;
+    }
+    setOrdersStatus('loading');
     try {
       const res = await api.get('/orders');
       setOrders(res.data?.orders || []);
       setOrdersError(null);
+      setOrdersStatus('ready');
     } catch (err) {
       const message = errorMessage(err, 'Could not load orders');
       setOrdersError(message);
+      setOrdersStatus('error');
       toast.error(message);
     }
   }, [currentUser]);
@@ -649,6 +656,7 @@ export const ShopProvider = ({ children }) => {
         sections,
         shippingQuote,
         orders,
+        ordersStatus,
         ordersError,
         lastServerOrder,
         loadCatalog,
