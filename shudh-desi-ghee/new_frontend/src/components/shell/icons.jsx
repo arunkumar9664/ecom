@@ -1,3 +1,10 @@
+export function IconLeaf(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M12 21C5 14.5 4 8 7 4c3 2.2 4.2 2.4 5-1 1.2 3.6 2.6 3.8 5 1 3 4 2 10.5-5 17z" />
+    </svg>
+  );
+}
 export function IconMenu(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" {...props}>

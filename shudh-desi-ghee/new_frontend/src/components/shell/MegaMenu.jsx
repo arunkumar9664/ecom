@@ -9,7 +9,7 @@ export default function MegaMenu({ categories, onNavigate }) {
   const gifting = list.find((category) => category.slug === 'gifting');
 
   return (
-    <div className="absolute inset-x-0 top-full z-30 hidden border-t border-line bg-paper shadow-[0_16px_30px_rgba(43,38,32,0.08)] lg:block">
+    <div className="absolute inset-x-0 top-full z-30 hidden border-t border-line bg-paper shadow-[0_16px_30px_rgba(43,38,32,0.08)] min-[1000px]:block">
       <div className="mx-auto grid max-w-[1360px] grid-cols-[1fr_1fr_1.3fr] gap-10 px-8 py-8">
         <div>
           <p className="font-body text-[11px] font-semibold tracking-[0.16em] text-ink uppercase">By category</p>

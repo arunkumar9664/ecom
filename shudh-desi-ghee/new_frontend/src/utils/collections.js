@@ -6,14 +6,22 @@ export function giftingSelection(products, categories) {
   const list = Array.isArray(products) ? products : [];
   const slugs = new Set((categories || []).map((category) => category?.slug).filter(Boolean));
   const slug = GIFT_SLUGS.find((candidate) => slugs.has(candidate)) || null;
-  if (!slug) {
+  const newest = [...list].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  const picked = slug ? newest.filter((product) => product.categorySlug === slug) : [];
+  const seen = new Set(picked.map((product) => product.id));
+  const filled = [...picked];
+  if (!slug || filled.length < 6) {
     // TODO(backend) no gifting or combo-packs category; newest products stand in
-    return { products: list.slice(0, 12), href: '/shop', fallback: true };
+    newest.forEach((product) => {
+      if (filled.length >= 6 || seen.has(product.id)) return;
+      seen.add(product.id);
+      filled.push(product);
+    });
   }
   return {
-    products: list.filter((product) => product.categorySlug === slug).slice(0, 12),
-    href: `/category/${slug}`,
-    fallback: false,
+    products: (filled.length ? filled : newest).slice(0, 12),
+    href: slug ? `/category/${slug}` : '/shop',
+    fallback: !slug || picked.length < 6,
   };
 }
 

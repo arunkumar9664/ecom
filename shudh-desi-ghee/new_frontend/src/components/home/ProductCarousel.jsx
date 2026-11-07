@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from './ProductCard';
 import { IconChevron } from '../shell/icons';
+import useStripScroll from '../../hooks/useStripScroll';
 
 function Skeleton() {
   return (
@@ -19,6 +20,7 @@ function Skeleton() {
 
 export default function ProductCarousel({ title, products, href, status, onRetry, label }) {
   const scroller = useRef(null);
+  const swallowClick = useStripScroll(scroller);
   const items = Array.isArray(products) ? products : [];
 
   const scrollByCard = (direction) => {
@@ -30,12 +32,12 @@ export default function ProductCarousel({ title, products, href, status, onRetry
 
   return (
     <section aria-label={label || title} className="px-4 py-8 md:px-8 md:py-12">
-      <div className="mb-6 text-center md:flex md:items-end md:justify-between md:text-left">
-        <h2 className="font-heading text-3xl text-ink md:text-4xl">{title}</h2>
-        <Link to={href} className="mt-4 hidden font-body text-sm tracking-[0.12em] text-ink uppercase underline-offset-4 hover:underline md:inline">
+      <div className="mx-auto mb-6 max-w-[1360px] text-center min-[1000px]:flex min-[1000px]:items-end min-[1000px]:justify-between min-[1000px]:text-left">
+        <h2 className="font-heading text-[26px] text-ink min-[1000px]:text-[32px]">{title}</h2>
+        <Link to={href} className="mt-4 hidden font-body text-[17px] tracking-normal text-ink hover:underline min-[1000px]:inline">
           View All
         </Link>
-        <Link to={href} className="mt-4 flex h-11 w-full items-center justify-center border border-ink font-body text-xs tracking-[0.16em] text-ink uppercase md:hidden">
+        <Link to={href} className="mt-4 flex h-11 w-full items-center justify-center border border-ink font-body text-[17px] tracking-normal text-ink min-[1000px]:hidden">
           View All
         </Link>
       </div>
@@ -57,9 +59,9 @@ export default function ProductCarousel({ title, products, href, status, onRetry
               <IconChevron className="h-4 w-4 rotate-180" />
             </button>
           ) : null}
-          <div ref={scroller} className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2">
+          <div ref={scroller} onClickCapture={swallowClick} className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2">
             {items.map((product) => (
-              <div key={product.id} className={`shrink-0 snap-start ${items.length === 1 ? 'w-full md:w-[calc((100%-2rem)/3)]' : 'w-[72%] md:w-[calc((100%-2rem)/3)]'}`}>
+              <div key={product.id} className="w-[70%] shrink-0 snap-start min-[1000px]:w-[calc((100%-2rem)/3)]">
                 <ProductCard product={product} />
               </div>
             ))}

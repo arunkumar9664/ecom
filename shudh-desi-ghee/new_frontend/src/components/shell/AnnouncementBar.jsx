@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useShop } from '../../hooks/useShop';
+import { IconLeaf } from './icons';
 
 function isGenericShipping(message) {
   return /free (shipping|dispatch|delivery)/i.test(message) && !/₹|\brs\.?\s*\d/i.test(message);
@@ -37,8 +38,12 @@ export default function AnnouncementBar() {
   if (!text) return null;
 
   return (
-    <div className="bg-olive px-4 py-2 text-center text-[12px] leading-snug text-paper sm:text-[13px]">
-      <p className="mx-auto max-w-4xl">{text}</p>
+    <div className="bg-olive px-4 py-2 text-paper">
+      <p className="mx-auto flex max-w-4xl items-center justify-center gap-3 text-center font-body text-[12px] leading-snug tracking-wide sm:text-[13px]">
+        <IconLeaf className="h-3 w-3 shrink-0 text-gold" />
+        <span>{text}</span>
+        <IconLeaf className="h-3 w-3 shrink-0 -scale-x-100 text-gold" />
+      </p>
     </div>
   );
 }

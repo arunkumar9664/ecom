@@ -6,6 +6,7 @@ import HeroCarousel from '../components/home/HeroCarousel';
 import CategoryTiles from '../components/home/CategoryTiles';
 import ProductCarousel from '../components/home/ProductCarousel';
 import CraftCoverflow from '../components/home/CraftCoverflow';
+import ShopTheWorkshop from '../components/home/ShopTheWorkshop';
 import OurStory from '../components/home/OurStory';
 import JournalRow from '../components/home/JournalRow';
 
@@ -21,16 +22,16 @@ export default function HomePage() {
       <HeroCarousel slides={heroSlides} status={sections.hero} onRetry={loadCatalog} />
       <CategoryTiles categories={categories} status={sections.categories} onRetry={loadCatalog} />
       <ProductCarousel
-        title="Gifting essentials"
-        label="Gifting essentials"
+        title="Gifting Essentials"
+        label="Gifting Essentials"
         products={gifts.products}
         href={gifts.href}
         status={sections.products}
         onRetry={loadCatalog}
       />
       <ProductCarousel
-        title="New arrivals"
-        label="New arrivals"
+        title="New Arrivals"
+        label="New Arrivals"
         products={arrivals}
         href="/shop"
         status={sections.products}
@@ -45,6 +46,7 @@ export default function HomePage() {
         onRetry={loadCatalog}
       />
       <CraftCoverflow />
+      <ShopTheWorkshop />
       <OurStory />
       <JournalRow />
     </main>
