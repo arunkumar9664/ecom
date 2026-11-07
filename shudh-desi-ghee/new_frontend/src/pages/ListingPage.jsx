@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
-import SafeImage from '../components/SafeImage';
-import ProductCard from '../components/home/ProductCard';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import ListingCard from '../components/listing/ListingCard';
 import FilterDrawer from '../components/listing/FilterDrawer';
 import { useShop } from '../hooks/useShop';
 import useDocumentTitle from '../hooks/useDocumentTitle';
-import { scentLinks } from '../config/nav';
 
 const PAGE_SIZE = 12;
 const SORTS = [
@@ -26,6 +24,7 @@ function sortProducts(list, sort) {
 
 export default function ListingPage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const { categories, products: catalog, sections, loadCatalog, queryProducts } = useShop();
   const [rows, setRows] = useState([]);
@@ -33,7 +32,7 @@ export default function ListingPage() {
   const [error, setError] = useState('');
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [price, setPrice] = useState({ min: params.get('minPrice') || '', max: params.get('maxPrice') || '' });
+  const [sortOpen, setSortOpen] = useState(false);
   const [queryKey, setQueryKey] = useState('');
 
   const search = params.get('search') || '';
@@ -58,7 +57,6 @@ export default function ListingPage() {
   const nextQueryKey = [slug, search, minPrice, maxPrice, size, sort, collection, missingCategory, sections.categories.status].join('|');
   if (queryKey !== nextQueryKey) {
     setQueryKey(nextQueryKey);
-    setPrice({ min: minPrice, max: maxPrice });
     setVisible(PAGE_SIZE);
     if (!(slug && sections.categories.status === 'loading') && !missingCategory) {
       setStatus('loading');
@@ -120,11 +118,17 @@ export default function ListingPage() {
     setFiltersOpen(false);
   };
 
-  const scentTo = (link) => {
-    const next = new URLSearchParams(link.to.split('?')[1] || '');
-    const term = next.get('search') || '';
-    if (slug) return `/category/${slug}?search=${encodeURIComponent(term)}`;
-    return link.to;
+  const applyFilters = (draft) => {
+    const next = new URLSearchParams();
+    if (draft.search) next.set('search', draft.search);
+    if (draft.min) next.set('minPrice', draft.min);
+    if (draft.max) next.set('maxPrice', draft.max);
+    if (draft.size) next.set('size', draft.size);
+    if (sort !== 'newest') next.set('sort', sort);
+    if (collection) next.set('collection', collection);
+    const path = draft.category ? `/category/${draft.category}` : '/shop';
+    navigate({ pathname: path, search: next.toString() });
+    setFiltersOpen(false);
   };
 
   if (sections.categories.status === 'error' && slug) {
@@ -161,53 +165,38 @@ export default function ListingPage() {
   ].filter(Boolean);
 
   return (
-    <main>
-      <section className="relative">
-        {category?.image ? (
-          <SafeImage src={category.image} alt="" className="h-52 w-full object-cover md:h-72" />
-        ) : (
-          <div className="h-24 bg-sand md:h-32" />
-        )}
-        <div className="relative z-10 mx-4 -mt-10 bg-white px-6 py-8 md:mx-auto md:-mt-16 md:max-w-3xl md:px-10">
-          <h1 className="text-center font-heading text-4xl text-ink md:text-5xl">{title}</h1>
-          {category?.tagline && !search ? (
-            <p className="mt-3 text-center font-body text-sm text-muted">{category.tagline}</p>
-          ) : null}
-          {search ? (
-            <p className="mt-3 text-center font-body text-sm text-muted">
-              {status === 'ready' ? `${sorted.length} ${sorted.length === 1 ? 'product' : 'products'}` : ''}
-            </p>
+    <main className="py-8">
+      <div className="mx-auto w-[min(67vw,1200px)] max-md:w-auto max-md:px-4">
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <h1 className="font-heading text-3xl text-ink">{title}</h1>
+        <p className="sr-only" aria-live="polite">{status === 'ready' ? `${sorted.length} products` : ''}</p>
+      </div>
+      <div className="mb-6 flex items-center justify-end gap-6">
+        <div className="relative">
+          <button type="button" aria-expanded={sortOpen} onClick={() => setSortOpen((open) => !open)} className="flex items-center gap-2 font-body text-[15px] font-medium tracking-[0.06em] text-terracotta uppercase">
+            Sort by
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M8 7h10M6 12h8M10 17h6" /></svg>
+          </button>
+          {sortOpen ? (
+            <ul className="absolute right-0 z-20 mt-2 w-52 border border-line bg-white py-1 shadow-md">
+              {SORTS.map((item) => (
+                <li key={item.id}>
+                  <button type="button" className="w-full px-3 py-2 text-left font-body text-sm text-ink hover:bg-sand" onClick={() => { patchParams({ sort: item.id === 'newest' ? '' : item.id }); setSortOpen(false); }}>
+                    {item.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
           ) : null}
         </div>
-      </section>
-
-      <div className="mx-auto flex max-w-[1360px] flex-wrap items-center justify-between gap-4 px-4 py-6 md:px-8">
-        <button type="button" onClick={() => setFiltersOpen(true)} className="h-11 border border-ink px-5 font-body text-xs tracking-[0.16em] text-ink uppercase">
-          Filter
+        <button type="button" onClick={() => setFiltersOpen(true)} className="flex items-center gap-2 font-body text-[15px] font-medium tracking-[0.06em] text-terracotta uppercase">
+          Filter by
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M4 5h16l-6 7v6l-4 2v-8z" /></svg>
         </button>
-        <p className="font-body text-sm text-muted" aria-live="polite">
-          {status === 'ready' ? `${sorted.length} ${sorted.length === 1 ? 'product' : 'products'}` : ''}
-        </p>
-        <label className="flex items-center gap-2 font-body text-xs tracking-[0.16em] text-terracotta uppercase">
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-            <path d="M4 7h16M7 12h10M10 17h4" />
-          </svg>
-          Sort by
-          <select
-            aria-label="Sort by"
-            value={sort}
-            onChange={(event) => patchParams({ sort: event.target.value === 'newest' ? '' : event.target.value })}
-            className="h-11 border border-line bg-paper px-2 font-body text-sm tracking-normal text-ink normal-case"
-          >
-            {SORTS.map((item) => (
-              <option key={item.id} value={item.id}>{item.label}</option>
-            ))}
-          </select>
-        </label>
       </div>
 
       {chips.length ? (
-        <div className="mx-auto flex max-w-[1360px] flex-wrap items-center gap-2 px-4 pb-4 md:px-8">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
           {chips.map((chip) => (
             <button
               key={chip.key}
@@ -225,9 +214,9 @@ export default function ListingPage() {
         </div>
       ) : null}
 
-      <div className="mx-auto max-w-[1360px] px-4 pb-16 md:px-8">
+      <div className="pb-16">
         {status === 'loading' ? (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-[22px] md:grid-cols-3">
             {Array.from({ length: 8 }).map((_, index) => (
               <div key={index} className="aspect-[3/4] animate-pulse bg-sand motion-reduce:animate-none" />
             ))}
@@ -262,9 +251,9 @@ export default function ListingPage() {
         ) : null}
         {status === 'ready' && shown.length ? (
           <>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-[22px] md:grid-cols-3">
               {shown.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ListingCard key={product.id} product={product} />
               ))}
             </div>
             {visible < sorted.length ? (
@@ -278,22 +267,14 @@ export default function ListingPage() {
         ) : null}
       </div>
 
+      </div>
       <FilterDrawer
         open={filtersOpen}
         onClose={() => setFiltersOpen(false)}
-        price={price}
-        setPrice={setPrice}
-        onApplyPrice={() => {
-          patchParams({ minPrice: price.min.trim(), maxPrice: price.max.trim() });
-          setFiltersOpen(false);
-        }}
+        applied={{ min: minPrice, max: maxPrice, size, search, category: slug || '' }}
         sizes={sizes}
-        activeSize={size}
-        onSize={(value) => patchParams({ size: value })}
-        scentTo={(link) => {
-          const known = scentLinks.find((item) => item.label === link.label);
-          return scentTo(known || link);
-        }}
+        categories={categories}
+        onApply={applyFilters}
       />
     </main>
   );

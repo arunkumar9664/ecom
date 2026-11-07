@@ -1,14 +1,13 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../../hooks/useShop';
-import { MOCK_SIGNIN_MESSAGE } from '../../config/brand';
 import { shellNav } from '../../config/nav';
 import { brand } from '../../config/brand';
 import { IconChevron, IconClose, IconHome } from './icons';
 
 export default function MobileDrawer({ open, onClose }) {
-  const { categories, currentUser, useMockData, logoutUser, openAuthModal } = useShop();
+  const { categories, currentUser, logoutUser } = useShop();
+  const navigate = useNavigate();
   const items = shellNav(categories);
 
   useEffect(() => {
@@ -20,13 +19,9 @@ export default function MobileDrawer({ open, onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  const goAuth = (tab) => {
+  const goAuth = (path) => {
     onClose();
-    if (useMockData) {
-      toast.error(MOCK_SIGNIN_MESSAGE);
-      return;
-    }
-    openAuthModal(tab);
+    navigate(path);
   };
 
   return (
@@ -40,10 +35,10 @@ export default function MobileDrawer({ open, onClose }) {
           </button>
         </div>
         <div className="grid grid-cols-2 border-y border-line">
-          <button type="button" onClick={() => goAuth('login')} className="py-3 font-heading text-sm tracking-[0.08em] underline decoration-ink/40 underline-offset-4">
+          <button type="button" onClick={() => goAuth('/login')} className="py-3 font-heading text-sm tracking-[0.08em] underline decoration-ink/40 underline-offset-4">
             Sign in
           </button>
-          <button type="button" onClick={() => goAuth('register')} className="border-l border-line py-3 font-heading text-sm tracking-[0.08em] underline decoration-ink/40 underline-offset-4">
+          <button type="button" onClick={() => goAuth('/register')} className="border-l border-line py-3 font-heading text-sm tracking-[0.08em] underline decoration-ink/40 underline-offset-4">
             Register
           </button>
         </div>

@@ -6,7 +6,7 @@ import AccountDropdown from './AccountDropdown';
 import { IconBag, IconLeaf, IconMenu, IconSearch, IconUser } from './icons';
 
 export default function Header({ menuOpen, onMenu, accountOpen, onAccount }) {
-  const { cartCount, setIsSearchOpen } = useShop();
+  const { cartCount, setIsSearchOpen, setIsCartOpen } = useShop();
   const accountRef = useRef(null);
 
   useEffect(() => {
@@ -56,12 +56,12 @@ export default function Header({ menuOpen, onMenu, accountOpen, onAccount }) {
             </button>
             <AccountDropdown open={accountOpen} onClose={onAccount} />
           </div>
-          <Link to="/cart" className="relative order-1 flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink hover:border-olive hover:text-olive min-[1000px]:order-2 min-[1000px]:h-10 min-[1000px]:w-10" aria-label={`Bag, ${cartCount} items`}>
+          <button type="button" onClick={() => setIsCartOpen(true)} className="relative order-1 flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink hover:border-olive hover:text-olive min-[1000px]:order-2 min-[1000px]:h-10 min-[1000px]:w-10" aria-label={`Bag, ${cartCount} items`}>
             <IconBag className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-terracotta px-1 font-body text-[10px] font-semibold text-paper">
               {cartCount}
             </span>
-          </Link>
+          </button>
         </div>
       </div>
     </header>

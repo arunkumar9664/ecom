@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useShop } from '../../hooks/useShop';
 import AnnouncementBar from './AnnouncementBar';
 import Header from './Header';
@@ -9,6 +9,9 @@ import SearchOverlay from './SearchOverlay';
 import Footer from './Footer';
 import FloatingActions from './FloatingActions';
 import MiniCartBar from './MiniCartBar';
+import CartDrawer from './CartDrawer';
+import { brand } from '../../config/brand';
+import { IconLeaf } from './icons';
 import WelcomePopup from './WelcomePopup';
 import MockBadge from './MockBadge';
 import AuthModal from '../auth/AuthModal';
@@ -35,6 +38,23 @@ export default function StoreShell({ children }) {
       document.body.style.overflow = '';
     };
   }, [menuOpen, accountOpen]);
+
+  if (pathname === '/checkout') {
+    return (
+      <div className="min-h-screen bg-sand">
+        {useMockData ? <MockBadge /> : null}
+        <header className="bg-paper py-6">
+          <Link to="/" className="flex items-center justify-center gap-2 font-heading text-[28px] text-ink" aria-label={brand.name}>
+            Field
+            <IconLeaf className="h-4 w-4 text-olive" />
+            <span className="text-gold italic">&</span>
+            Hearth
+          </Link>
+        </header>
+        <div id="content">{children}</div>
+      </div>
+    );
+  }
 
   if (isAdmin) {
     return (
@@ -72,6 +92,7 @@ export default function StoreShell({ children }) {
       <Footer />
       <FloatingActions />
       <MiniCartBar />
+      <CartDrawer />
       <WelcomePopup />
       <AuthModal />
     </div>

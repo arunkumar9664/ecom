@@ -1,20 +1,16 @@
-import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../../hooks/useShop';
-import { MOCK_SIGNIN_MESSAGE, brand } from '../../config/brand';
+import { brand } from '../../config/brand';
 import { IconBag, IconHeart, IconOut, IconTruck, IconUser } from './icons';
 
 export default function AccountDropdown({ open, onClose }) {
-  const { currentUser, useMockData, logoutUser, openAuthModal } = useShop();
+  const { currentUser, logoutUser } = useShop();
+  const navigate = useNavigate();
   if (!open) return null;
 
-  const goAuth = (tab) => {
+  const goAuth = (path) => {
     onClose();
-    if (useMockData) {
-      toast.error(MOCK_SIGNIN_MESSAGE);
-      return;
-    }
-    openAuthModal(tab);
+    navigate(path);
   };
 
   const items = currentUser
@@ -26,8 +22,8 @@ export default function AccountDropdown({ open, onClose }) {
         { label: 'Track your order', to: '/track-order', icon: IconTruck },
       ]
     : [
-        { label: 'Sign in', action: () => goAuth('login'), icon: IconUser },
-        { label: 'Register', action: () => goAuth('register'), icon: IconUser },
+        { label: 'Sign in', action: () => goAuth('/login'), icon: IconUser },
+        { label: 'Register', action: () => goAuth('/register'), icon: IconUser },
         { label: 'My Cart', to: '/cart', icon: IconBag },
         { label: 'My Account', to: '/account', icon: IconUser },
         { label: 'My Wishlist', to: '/wishlist', icon: IconHeart },

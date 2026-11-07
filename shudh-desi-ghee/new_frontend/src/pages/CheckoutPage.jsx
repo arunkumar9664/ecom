@@ -5,6 +5,7 @@ import { useShop } from '../hooks/useShop';
 import { brand, MOCK_DISABLED_MESSAGE, paymentMethods, razorpayKeyId } from '../config/brand';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { formatRupee } from '../utils/money';
+import SafeImage from '../components/SafeImage';
 import { clearAppliedCoupon, readAppliedCoupon } from '../utils/coupon';
 
 const phoneOk = (value) => /^[6-9]\d{9}$/.test(String(value || '').replace(/\D/g, ''));
@@ -32,9 +33,13 @@ function loadRazorpay() {
 const emptyAddress = { fullName: '', phone: '', street: '', city: '', state: '', pincode: '' };
 
 export default function CheckoutPage() {
-  const { cart, cartSubtotal, currentUser, useMockData, shippingQuote, addOrder, clearCart, openAuthModal, paymentMethods: methods } = useShop();
+  const { cart, cartSubtotal, currentUser, useMockData, shippingQuote, addOrder, clearCart, paymentMethods: methods } = useShop();
+  const nameParts = String(currentUser?.name || '').trim().split(/\s+/);
+  const [step, setStep] = useState('shipping');
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [contact, setContact] = useState({
-    name: currentUser?.name || '',
+    firstName: nameParts[0] || '',
+    lastName: nameParts.slice(1).join(' '),
     email: currentUser?.email || '',
     phone: currentUser?.phone || '',
   });
@@ -93,7 +98,8 @@ export default function CheckoutPage() {
 
   const validate = () => {
     const next = {};
-    if (!contact.name.trim()) next.name = 'Enter your name.';
+    if (!contact.firstName.trim()) next.firstName = 'Enter your first name.';
+    if (!contact.lastName.trim()) next.lastName = 'Enter your last name.';
     if (!emailOk(contact.email.trim())) next.email = 'Enter a valid email.';
     if (!phoneOk(contact.phone)) next.phone = 'Enter a 10-digit mobile number starting with 6, 7, 8, or 9.';
     const place = chosenAddress();
@@ -125,7 +131,7 @@ export default function CheckoutPage() {
         name: brand.name,
         description: `Order ${created.id}`,
         order_id: data.id,
-        prefill: { name: contact.name, email: contact.email, contact: contact.phone },
+        prefill: { name: `${contact.firstName} ${contact.lastName}`.trim(), email: contact.email, contact: contact.phone },
         theme: { color: '#3B4A32' },
         handler: async (response) => {
           try {
@@ -172,7 +178,7 @@ export default function CheckoutPage() {
       if (!created) {
         key = newKey();
         created = await addOrder({
-          customerName: contact.name.trim(),
+          customerName: `${contact.firstName} ${contact.lastName}`.trim(),
           customerEmail: contact.email.trim(),
           customerPhone: String(contact.phone).replace(/\D/g, ''),
           customerAddress,
@@ -224,28 +230,62 @@ export default function CheckoutPage() {
     );
   }
 
+  const placeAddress = chosenAddress();
+  const addressLine = placeAddress
+    ? `${placeAddress.street}, ${placeAddress.city}, ${placeAddress.state} - ${placeAddress.pincode}`
+    : '';
+  const goBack = () => {
+    if (step === 'payment') setStep('shipping');
+    else window.history.back();
+  };
+
   return (
-    <main className="mx-auto max-w-[1100px] px-4 py-8 md:px-8">
-      <h1 className="font-heading text-4xl text-ink">Checkout</h1>
-      {useMockData ? <p className="mt-4 font-body text-sm text-terracotta" role="status">{MOCK_DISABLED_MESSAGE}</p> : null}
-      {!currentUser ? (
-        <p className="mt-4 font-body text-sm text-ink">
-          You will get an email confirmation. Guest orders cannot be tracked later; sign in to track orders.{' '}
-          <button type="button" className="underline" onClick={() => openAuthModal('login')}>Sign in</button>
-        </p>
-      ) : null}
-      <form onSubmit={place} className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]" noValidate>
-        <div className="space-y-8">
-          <section className="bg-white p-6 md:p-8">
-            <h2 className="font-heading text-2xl text-ink">Contact</h2>
-            <div className="mt-4 grid gap-3">
-              <Field label="Name" value={contact.name} error={errors.name} onChange={(value) => setContact((c) => ({ ...c, name: value }))} />
-              <Field label="Email" type="email" value={contact.email} error={errors.email} onChange={(value) => setContact((c) => ({ ...c, email: value }))} />
-              <Field label="Phone" inputMode="numeric" value={contact.phone} error={errors.phone} onChange={(value) => setContact((c) => ({ ...c, phone: value }))} />
-            </div>
-          </section>
-          <section className="bg-white p-6 md:p-8">
-            <h2 className="font-heading text-2xl text-ink">Address</h2>
+    <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-5 px-4 py-8 lg:flex-row lg:items-start lg:justify-center">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (step === 'shipping') {
+            if (validate()) setStep('payment');
+            return;
+          }
+          place(event);
+        }}
+        className="order-2 w-full bg-white p-5 shadow-sm lg:order-1 lg:w-[min(50vw,640px)] lg:p-8"
+        noValidate
+      >
+        <div className="mb-6 flex items-center gap-3 border-b border-line pb-4">
+          <button type="button" onClick={goBack} className="font-body text-xs tracking-[0.12em] text-ink uppercase">‹ Back</button>
+          <ol className="flex flex-1 items-center justify-between gap-2 font-body text-xs">
+            {[
+              ['bag', 'Bag'],
+              ['shipping', 'Shipping Information'],
+              ['payment', 'Payment'],
+            ].map(([id, label], index) => {
+              const done = (id === 'bag') || (id === 'shipping' && step === 'payment');
+              const current = (id === 'shipping' && step === 'shipping') || (id === 'payment' && step === 'payment');
+              return (
+                <li key={id} className="flex flex-1 items-center gap-2">
+                  {index > 0 ? <span className="h-px flex-1 bg-line" aria-hidden="true" /> : null}
+                  <span className={`inline-flex items-center gap-1 ${current ? 'font-bold text-ink' : done ? 'text-terracotta' : 'text-muted'}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${done || current ? 'bg-terracotta' : 'bg-line'}`} aria-hidden="true" />
+                    {label}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+        {useMockData ? <p className="mb-4 font-body text-sm text-terracotta" role="status">{MOCK_DISABLED_MESSAGE}</p> : null}
+        {step === 'shipping' ? (
+          <>
+            {!currentUser ? (
+              <div className="mb-5 flex items-center justify-between gap-3 border border-line px-3 py-3">
+                <p className="font-body text-sm text-ink">Have an account? Sign in to use your saved addresses</p>
+                <Link to="/login" className="shrink-0 bg-ink px-4 py-2 font-body text-xs tracking-[0.12em] text-paper uppercase">Login</Link>
+              </div>
+            ) : null}
+            <h2 className="font-heading text-3xl text-ink">{currentUser ? 'Shipping Information' : 'Sign in or Checkout as guest'}</h2>
+            {!currentUser ? <p className="mt-2 font-body text-sm text-muted">{brand.guestCheckoutNote}</p> : null}
             {currentUser && saved.length ? (
               <div className="mt-4 space-y-2">
                 {saved.map((entry) => (
@@ -254,21 +294,31 @@ export default function CheckoutPage() {
                     <span>{entry.fullName}, {entry.street}, {entry.city}, {entry.state} {entry.pincode}</span>
                   </label>
                 ))}
-                <button type="button" className="font-body text-sm underline" onClick={() => setAddressMode('new')}>Add new</button>
+                <button type="button" className="font-body text-sm underline" onClick={() => setAddressMode('new')}>Add a new address</button>
               </div>
             ) : null}
             {addressMode === 'new' || !saved.length ? (
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <Field label="Street" value={address.street} onChange={(value) => setAddress((c) => ({ ...c, street: value }))} />
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <Field label="Mobile Number*" value={contact.phone} error={errors.phone} inputMode="numeric" onChange={(value) => setContact((c) => ({ ...c, phone: value }))} />
+                <Field label="Email*" type="email" value={contact.email} error={errors.email} onChange={(value) => setContact((c) => ({ ...c, email: value }))} />
+                <Field label="First Name*" value={contact.firstName} error={errors.firstName} onChange={(value) => setContact((c) => ({ ...c, firstName: value }))} />
+                <Field label="Last Name*" value={contact.lastName} error={errors.lastName} onChange={(value) => setContact((c) => ({ ...c, lastName: value }))} />
+                <Field label="Pincode*" value={address.pincode} error={errors.address} onChange={(value) => setAddress((c) => ({ ...c, pincode: value }))} />
                 <Field label="City" value={address.city} onChange={(value) => setAddress((c) => ({ ...c, city: value }))} />
+                <Field label="Country" value="India" readOnly />
                 <Field label="State" value={address.state} onChange={(value) => setAddress((c) => ({ ...c, state: value }))} />
-                <Field label="Pincode" value={address.pincode} onChange={(value) => setAddress((c) => ({ ...c, pincode: value }))} />
+                <label className="block font-body text-xs text-muted sm:col-span-2">
+                  Address*
+                  <textarea value={address.street} onChange={(event) => setAddress((c) => ({ ...c, street: event.target.value }))} className="mt-1 h-24 w-full border border-line bg-white px-3 py-2 font-body text-sm text-ink" />
+                </label>
               </div>
             ) : null}
             {errors.address ? <p className="mt-2 font-body text-sm text-terracotta" role="alert">{errors.address}</p> : null}
-          </section>
-          <section className="bg-white p-6 md:p-8">
-            <h2 className="font-heading text-2xl text-ink">Payment method</h2>
+            <button type="submit" className="mt-6 h-12 w-full bg-ink font-body text-sm text-paper">Proceed to Payment</button>
+          </>
+        ) : (
+          <>
+            <h2 className="font-heading text-3xl text-ink">Payment</h2>
             <label className="mt-4 flex gap-3 font-body text-sm">
               <input type="radio" name="pay" checked={method === methods.razorpay} disabled={prepaidDisabled} onChange={() => setMethod(methods.razorpay)} />
               {paymentMethods.razorpay}
@@ -279,31 +329,59 @@ export default function CheckoutPage() {
               {paymentMethods.cod}
             </label>
             {errors.method ? <p className="mt-2 font-body text-sm text-terracotta" role="alert">{errors.method}</p> : null}
-          </section>
-        </div>
-        <aside className="h-fit bg-white p-6">
-          <h2 className="font-heading text-2xl text-ink">Order summary</h2>
-          <p className="mt-3 font-body text-sm text-ink">Bag {formatRupee(cartSubtotal)}</p>
-          <p className="font-body text-sm text-ink">Promo {discount ? `−${formatRupee(discount)} (${coupon.code})` : '—'}</p>
-          <p className="font-body text-sm text-ink">Shipping {shippingQuote.known ? formatRupee(shippingAmount) : shippingQuote.message}</p>
-          <p className="mt-3 font-body text-sm font-bold text-ink">Estimated {formatRupee(estimate)}</p>
-          <p className="mt-2 font-body text-xs text-muted">The amount charged is the total returned by the server.</p>
-          {failure ? <p className="mt-3 font-body text-sm text-terracotta" role="alert">{failure}</p> : null}
-          <button type="submit" disabled={busy || useMockData || !cart.length} className="mt-5 h-12 w-full bg-olive font-body text-xs tracking-[0.14em] text-paper uppercase disabled:bg-line">
-            {busy ? 'Please wait' : 'Place order'}
-          </button>
-        </aside>
+            <p className="mt-5 font-body text-sm text-ink">{addressLine} <button type="button" className="underline" onClick={() => setStep('shipping')}>Edit</button></p>
+            {failure ? <p className="mt-3 font-body text-sm text-terracotta" role="alert">{failure}</p> : null}
+            {useMockData ? <p className="mt-3 font-body text-sm text-terracotta">{MOCK_DISABLED_MESSAGE}</p> : null}
+            <button type="submit" disabled={busy || useMockData || !cart.length} className="mt-6 h-12 w-full bg-ink font-body text-sm text-paper disabled:bg-line">
+              {busy ? 'Please wait' : 'Place Order'}
+            </button>
+            <p className="mt-2 font-body text-xs text-muted">The amount charged is the total returned by the server.</p>
+          </>
+        )}
       </form>
+      <aside className="order-1 bg-sand p-5 lg:order-2 lg:w-[300px]">
+        <button type="button" className="flex w-full items-center justify-between text-left lg:hidden" aria-expanded={summaryOpen} onClick={() => setSummaryOpen((open) => !open)}>
+          <span className="font-heading text-xl text-ink">{cart.length} Items in your Bag</span>
+          <span className="font-body text-sm">{summaryOpen ? 'Hide' : 'Show'}</span>
+        </button>
+        <div className={`${summaryOpen ? 'block' : 'hidden'} lg:block`}>
+          <div className="hidden items-center justify-between lg:flex">
+            <h2 className="font-heading text-xl text-ink">{cart.length} Items in your Bag</h2>
+            <Link to="/cart" className="font-body text-sm underline">Edit Bag</Link>
+          </div>
+          <ul className="thin-scroll mt-3 max-h-64 space-y-3 overflow-y-auto pr-1">
+            {cart.map((line) => (
+              <li key={line.id} className="flex gap-3 border border-line bg-white p-2">
+                <SafeImage src={line.product?.image} alt="" className="h-14 w-12 object-contain" />
+                <div>
+                  <p className="font-heading text-sm text-ink">{line.product?.name}</p>
+                  <p className="font-body text-xs text-muted">Quantity: {line.quantity}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <h3 className="mt-4 font-heading text-xl text-ink">Order Summary</h3>
+          <dl className="mt-2 space-y-1 font-body text-sm text-ink">
+            <div className="flex justify-between"><dt>Bag Total</dt><dd>{formatRupee(cartSubtotal)}</dd></div>
+            <div className="flex justify-between"><dt>Promo Applied</dt><dd>{discount ? `−${formatRupee(discount)}` : '−₹0.00'}</dd></div>
+            <div className="flex justify-between"><dt>Shipping</dt><dd>{shippingQuote.known ? formatRupee(shippingAmount) : shippingQuote.message}</dd></div>
+            <div className="flex justify-between font-bold"><dt>Grand Total</dt><dd>{formatRupee(estimate)}</dd></div>
+          </dl>
+        </div>
+      </aside>
     </main>
   );
 }
 
 function Field({ label, error, onChange, value, ...props }) {
-  const id = `checkout-${label.toLowerCase()}`;
+  const id = `checkout-${label.toLowerCase().replace(/[^a-z]/g, '')}`;
   return (
-    <label htmlFor={id} className="block font-body text-sm text-ink">
+    <label htmlFor={id} className="block font-body text-xs text-muted">
       {label}
-      <input id={id} value={value} onChange={(event) => onChange(event.target.value)} {...props} className="mt-1 h-11 w-full border border-line bg-paper px-3 font-body text-sm" />
+      <span className="relative mt-1 block">
+        <input id={id} value={value} onChange={onChange ? (event) => onChange(event.target.value) : undefined} {...props} className="h-11 w-full border border-line bg-white px-3 font-body text-sm text-ink" />
+        {error ? <span className="absolute top-1/2 right-2 -translate-y-1/2 font-body text-sm text-terracotta" aria-hidden="true">×</span> : null}
+      </span>
       {error ? <span className="mt-1 block text-xs text-terracotta" role="alert">{error}</span> : null}
     </label>
   );
