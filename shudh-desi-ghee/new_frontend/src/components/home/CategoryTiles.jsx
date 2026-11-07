@@ -13,7 +13,11 @@ export default function CategoryTiles({ categories, status, onRetry }) {
   useEffect(() => {
     const node = scroller.current;
     if (!node) return undefined;
-    const measure = () => setOverflow(node.scrollWidth > node.clientWidth + 4);
+    const measure = () => {
+      const extra = node.scrollWidth - node.clientWidth;
+      setOverflow(extra > 4);
+      if (extra > 4) node.scrollLeft = extra / 2;
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(node);
@@ -31,7 +35,7 @@ export default function CategoryTiles({ categories, status, onRetry }) {
 
   if (status?.status === 'loading' || status?.status === 'idle') {
     return (
-      <div className="flex gap-[14px] overflow-hidden px-4 py-8">
+      <div className="flex justify-center gap-[14px] overflow-hidden px-4 py-8">
         {Array.from({ length: 4 }).map((_, index) => (
           <div key={index} className="h-[120px] w-[120px] shrink-0 animate-pulse rounded-[14px] bg-sand motion-reduce:animate-none md:h-[150px] md:w-[150px]" />
         ))}
@@ -63,20 +67,22 @@ export default function CategoryTiles({ categories, status, onRetry }) {
             </button>
           </>
         ) : null}
-        <div ref={scroller} onClickCapture={swallowClick} className="no-scrollbar flex gap-[14px] overflow-x-auto px-4 pb-1 md:px-8">
-          {items.map((category) => (
-            <Link
-              key={category.id || category.slug}
-              to={`/category/${category.slug}`}
-              className="relative h-[120px] w-[120px] shrink-0 overflow-hidden rounded-[14px] md:h-[150px] md:w-[150px]"
-            >
-              <SafeImage src={category.image} alt="" className="h-full w-full object-cover" />
-              <span className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.45),rgba(0,0,0,0.25))]" aria-hidden="true" />
-              <span className="absolute inset-0 flex items-center justify-center px-2 text-center font-body text-[15px] leading-tight font-medium tracking-normal text-white uppercase md:text-[16px]">
-                <span className="line-clamp-2">{category.name}</span>
-              </span>
-            </Link>
-          ))}
+        <div ref={scroller} onClickCapture={swallowClick} className="no-scrollbar overflow-x-auto pb-1">
+          <div className="flex w-max min-w-full justify-center gap-[14px] px-4 md:px-8">
+            {items.map((category) => (
+              <Link
+                key={category.id || category.slug}
+                to={`/category/${category.slug}`}
+                className="relative h-[120px] w-[120px] shrink-0 overflow-hidden rounded-[14px] md:h-[150px] md:w-[150px]"
+              >
+                <SafeImage src={category.image} alt="" className="h-full w-full object-cover" />
+                <span className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.45),rgba(0,0,0,0.25))]" aria-hidden="true" />
+                <span className="absolute inset-0 flex items-center justify-center px-2 text-center font-body text-[15px] leading-tight font-medium tracking-normal text-white uppercase md:text-[16px]">
+                  <span className="line-clamp-2">{category.name}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </section>
