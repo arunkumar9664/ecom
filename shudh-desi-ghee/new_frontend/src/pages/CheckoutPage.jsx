@@ -225,7 +225,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-5 px-4 py-8 lg:flex-row lg:items-start lg:justify-center">
+    <main className="mx-auto flex w-full max-w-[1100px] flex-col gap-5 px-gutter py-8 lg:flex-row lg:items-start lg:justify-center">
       <form
         onSubmit={(event) => {
           event.preventDefault();

@@ -10,6 +10,14 @@ export const localImages = {
 };
 
 /** Same files the seed and the old static catalog point at. */
+/** Optional crop focus for hero frames. Keys match catalogImages. */
+export const heroFocus = {
+  hero1: 'center center',
+  hero2: 'center 35%',
+  heroMobile1: 'center center',
+  heroMobile2: 'center 40%',
+};
+
 export const catalogImages = {
   hero1: rosier('web_home_pg1.png?v=1788185972', 1600),
   hero2: rosier('janmashtami_banner_web_1.png?v=1788186000', 1600),

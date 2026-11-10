@@ -67,7 +67,7 @@ export default function CraftCoverflow() {
   };
 
   return (
-    <section aria-roledescription="carousel" aria-label="Behind the Craft" className="overflow-hidden bg-sand px-4 py-14 md:px-8 md:py-16">
+    <section aria-roledescription="carousel" aria-label="Behind the Craft" className="overflow-hidden bg-sand px-gutter py-14 md:py-16">
       <h2 className="text-center font-heading text-[26px] text-ink min-[1000px]:text-[32px]">Behind the Craft</h2>
       <p className="sr-only" aria-live="polite">{live}</p>
       <div

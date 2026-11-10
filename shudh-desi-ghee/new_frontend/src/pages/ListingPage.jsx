@@ -166,7 +166,7 @@ export default function ListingPage() {
 
   return (
     <main className="py-8">
-      <div className="mx-auto w-[min(67vw,1200px)] max-md:w-auto max-md:px-4">
+      <div className="mx-auto max-w-[1360px] px-gutter">
       <div className="mb-4 flex items-end justify-between gap-4">
         <h1 className="font-heading text-3xl text-ink">{title}</h1>
         <p className="sr-only" aria-live="polite">{status === 'ready' ? `${sorted.length} products` : ''}</p>

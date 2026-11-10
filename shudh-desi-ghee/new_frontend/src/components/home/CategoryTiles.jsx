@@ -68,15 +68,15 @@ export default function CategoryTiles({ categories, status, onRetry }) {
           </>
         ) : null}
         <div ref={scroller} onClickCapture={swallowClick} className="no-scrollbar overflow-x-auto pb-1">
-          <div className="flex w-max min-w-full justify-center gap-[14px] px-4 md:px-8">
+          <div className="flex w-max min-w-full justify-center gap-[14px] px-gutter">
             {items.map((category) => (
               <Link
                 key={category.id || category.slug}
                 to={`/category/${category.slug}`}
-                className="relative h-[120px] w-[120px] shrink-0 overflow-hidden rounded-[14px] md:h-[150px] md:w-[150px]"
+                className="relative h-[120px] w-[120px] shrink-0 overflow-hidden rounded-[14px] bg-sand md:h-[150px] md:w-[150px]"
               >
-                <SafeImage src={category.image} alt="" className="h-full w-full object-cover" />
-                <span className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.45),rgba(0,0,0,0.25))]" aria-hidden="true" />
+                <SafeImage src={category.image} alt="" className="h-full w-full object-cover mix-blend-multiply" />
+                <span className="absolute inset-0 bg-[linear-gradient(to_top,rgba(43,38,32,0.28),rgba(43,38,32,0.05))]" aria-hidden="true" />
                 <span className="absolute inset-0 flex items-center justify-center px-2 text-center font-body text-[15px] leading-tight font-medium tracking-normal text-white uppercase md:text-[16px]">
                   <span className="line-clamp-2">{category.name}</span>
                 </span>

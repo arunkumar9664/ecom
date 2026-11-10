@@ -31,7 +31,7 @@ export default function ProductCarousel({ title, products, href, status, onRetry
   };
 
   return (
-    <section aria-label={label || title} className="px-4 py-8 md:px-8 md:py-12">
+    <section aria-label={label || title} className="px-gutter py-8 md:py-12">
       <div className="mx-auto mb-6 max-w-[1360px] text-center min-[1000px]:flex min-[1000px]:items-end min-[1000px]:justify-between min-[1000px]:text-left">
         <h2 className="font-heading text-[26px] text-ink min-[1000px]:text-[32px]">{title}</h2>
         <Link to={href} className="mt-4 hidden font-body text-[17px] tracking-normal text-ink hover:underline min-[1000px]:inline">

@@ -24,6 +24,14 @@ export default function WelcomePopup() {
 
   useFocusTrap(open, panel, close);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    document.body.dataset.modal = 'open';
+    return () => {
+      delete document.body.dataset.modal;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (

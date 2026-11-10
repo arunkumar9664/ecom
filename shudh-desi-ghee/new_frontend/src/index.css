@@ -18,12 +18,13 @@
 
 html {
   background: var(--color-paper);
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
   overflow-x: clip;
-  min-height: 100vh;
+  min-height: 100dvh;
   color: var(--color-ink);
   font-family: var(--font-body);
   background-color: var(--color-paper);
@@ -55,6 +56,60 @@ body {
 
 @keyframes check-draw {
   to { stroke-dashoffset: 0; }
+}
+
+.px-gutter {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 481px) {
+  .px-gutter {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+@media (min-width: 769px) {
+  .px-gutter {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+.-mx-gutter {
+  margin-left: -16px;
+  margin-right: -16px;
+}
+
+@media (min-width: 481px) {
+  .-mx-gutter {
+    margin-left: -20px;
+    margin-right: -20px;
+  }
+}
+
+@media (min-width: 769px) {
+  .-mx-gutter {
+    margin-left: -32px;
+    margin-right: -32px;
+  }
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.edge-fade {
+  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
 }
 
 :focus-visible {

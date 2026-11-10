@@ -43,7 +43,7 @@ export default function ShopTheWorkshop() {
   };
 
   return (
-    <section aria-label="Shop the Workshop" className="px-4 py-12 md:px-8">
+    <section aria-label="Shop the Workshop" className="px-gutter py-12">
       <h2 className="text-center font-heading text-[26px] text-ink min-[1000px]:text-[32px]">Shop the Workshop</h2>
       {sections.products.status === 'loading' || sections.products.status === 'idle' ? (
         <div className="mx-auto mt-8 h-[420px] max-w-[1360px] animate-pulse rounded-[14px] bg-sand motion-reduce:animate-none" />

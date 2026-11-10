@@ -130,6 +130,14 @@ export default function ProductPage() {
   }, [product?.id, status]);
 
   useEffect(() => {
+    const active = showBar && !product?.isSoldOut && !isCartOpen && !keyboardOpen;
+    document.body.dataset.purchaseBar = active ? '1' : '';
+    return () => {
+      delete document.body.dataset.purchaseBar;
+    };
+  }, [showBar, product?.isSoldOut, isCartOpen, keyboardOpen]);
+
+  useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return undefined;
     const check = () => setKeyboardOpen(viewport.height < window.innerHeight * 0.75);
@@ -173,7 +181,7 @@ export default function ProductPage() {
 
   if (status === 'loading') {
     return (
-      <main className="mx-auto grid max-w-[1360px] gap-8 px-4 py-10 md:grid-cols-2 md:px-8">
+      <main className="mx-auto grid max-w-[1360px] gap-8 px-gutter py-10 md:grid-cols-2">
         <div className="aspect-square animate-pulse bg-sand motion-reduce:animate-none" />
         <div className="space-y-4">
           <div className="h-10 w-2/3 animate-pulse bg-sand motion-reduce:animate-none" />
@@ -221,7 +229,7 @@ export default function ProductPage() {
 
   return (
     <main className="pb-24 md:pb-0">
-      <nav aria-label="Breadcrumb" className="mx-auto flex max-w-[1360px] items-center gap-2 px-4 pt-4 font-body text-[11px] font-medium tracking-[0.12em] text-muted uppercase md:px-8">
+      <nav aria-label="Breadcrumb" className="mx-auto flex max-w-[1360px] items-center gap-2 px-gutter pt-4 font-body text-[11px] font-medium tracking-[0.12em] text-muted uppercase">
         <Link to="/" className="shrink-0 hover:text-ink">Home</Link>
         <span aria-hidden="true">&gt;</span>
         {product.categorySlug ? (
@@ -233,7 +241,7 @@ export default function ProductPage() {
         <span className="truncate text-ink">{product.name}</span>
       </nav>
 
-      <div className="mx-auto grid max-w-[1360px] items-start gap-6 px-4 py-6 lg:grid-cols-[minmax(0,55%)_minmax(0,45%)] lg:px-8">
+      <div className="mx-auto grid max-w-[1360px] items-start gap-6 px-gutter py-6 lg:grid-cols-[minmax(0,55%)_minmax(0,45%)]">
         <ProductGallery images={images} name={product.name} saved={saved} onWishlist={() => toggleWishlist(product.id)} />
         <div className="bg-white px-6 py-8 md:px-12 lg:px-16">
           {product.badge ? (
@@ -391,7 +399,7 @@ export default function ProductPage() {
       </div>
 
       <Reveal>
-        <section aria-label="Why you will love it" className="bg-sand px-4 py-12 md:px-8">
+        <section aria-label="Why you will love it" className="bg-sand px-gutter py-12">
           <h2 className="text-center font-heading text-3xl text-ink">Why you will love it</h2>
           <ul className="mx-auto mt-8 grid max-w-[1100px] gap-4 md:grid-cols-3">
             {highlights.map((item) => {
@@ -420,7 +428,7 @@ export default function ProductPage() {
       ) : null}
 
       {showBar && !product.isSoldOut && !isCartOpen && !keyboardOpen ? (
-        <div className={`fixed inset-x-0 z-40 flex items-center justify-between gap-3 border-t border-line bg-paper px-4 py-3 md:hidden ${cartCount ? 'bottom-16' : 'bottom-0'}`}>
+        <div className={`fixed inset-x-0 z-40 flex items-center justify-between gap-3 border-t border-line bg-paper px-gutter py-3 md:hidden ${cartCount ? 'bottom-16' : 'bottom-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]'}`}>
           <p className="font-body text-sm font-bold text-ink">{formatRupee(product.price)}</p>
           <button type="button" onClick={() => commit(false)} className="h-11 flex-1 border border-ink font-body text-xs tracking-[0.14em] text-ink uppercase">
             Add to Bag

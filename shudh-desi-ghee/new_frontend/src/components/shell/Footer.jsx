@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useShop } from '../../hooks/useShop';
 import { storageKeys } from '../../config/brand';
+import { MockLine } from './MockBadge';
 
 function SocialIcon({ name }) {
   const common = { viewBox: '0 0 24 24', className: 'h-5 w-5', fill: 'currentColor', 'aria-hidden': true };
@@ -45,7 +46,7 @@ export default function Footer() {
         <path fill="currentColor" d="M32 60C14 42 8 28 14 16c8 6 12 6 18-4 6 10 10 10 18 4 6 12 0 26-18 44z" />
       </svg>
       <div className="bg-olive text-paper">
-        <div className="mx-auto grid max-w-[1360px] gap-10 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-5 lg:px-8">
+        <div className="mx-auto grid max-w-[1360px] gap-10 px-gutter py-12 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <p className="font-body text-[12px] tracking-[0.16em] uppercase">Shop</p>
             <ul className="mt-4 space-y-2 font-body text-sm text-sand">
@@ -148,6 +149,7 @@ export default function Footer() {
           >
             {expanded ? 'Show less' : 'Read more'}
           </button>
+          <MockLine />
         </div>
       </div>
     </footer>

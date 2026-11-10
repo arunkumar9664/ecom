@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { getImageUrl } from '../utils/image';
 
-export default function SafeImage({ src, alt = '', className = '', style, priority = false, width, height }) {
+export default function SafeImage({ src, alt = '', className = '', style, priority = false, width, height, draggable = false }) {
   const resolved = getImageUrl(src);
   const [failedSrc, setFailedSrc] = useState('');
   const failed = !resolved || failedSrc === resolved;
@@ -30,6 +30,7 @@ export default function SafeImage({ src, alt = '', className = '', style, priori
       style={style}
       width={width}
       height={height}
+      draggable={draggable}
       loading={priority ? 'eager' : 'lazy'}
       decoding="async"
       onError={() => setFailedSrc(resolved)}

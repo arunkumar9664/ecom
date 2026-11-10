@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useShop } from '../../hooks/useShop';
+import MockBadge from './MockBadge';
 import { IconLeaf } from './icons';
 
 function isGenericShipping(message) {
@@ -7,7 +8,7 @@ function isGenericShipping(message) {
 }
 
 export default function AnnouncementBar() {
-  const { promoMessages, sections, storeSettings } = useShop();
+  const { promoMessages, sections, storeSettings, useMockData } = useShop();
   const [index, setIndex] = useState(0);
   const threshold = Number(storeSettings?.freeShippingThreshold);
   const shippingKnown = sections.settings.status === 'ready' && Number.isFinite(threshold) && threshold > 0;
@@ -35,13 +36,14 @@ export default function AnnouncementBar() {
     ? sections.promo.error
     : messages[safeIndex] || (sections.promo.status === 'loading' ? 'Loading announcements' : '');
 
-  if (!text) return null;
+  if (!text && !useMockData) return null;
 
   return (
-    <div className="bg-olive px-4 py-2 text-paper">
-      <p className="mx-auto flex max-w-4xl items-center justify-center gap-3 text-center font-body text-[12px] leading-snug tracking-wide sm:text-[13px]">
+    <div className="relative bg-olive px-gutter py-2 text-paper">
+      <MockBadge />
+      <p className="mx-auto flex max-w-4xl items-center justify-center gap-3 px-8 text-center font-body text-[12px] leading-snug sm:text-[13px]">
         <IconLeaf className="h-3 w-3 shrink-0 text-gold" />
-        <span>{text}</span>
+        <span className="min-w-0">{text}</span>
         <IconLeaf className="h-3 w-3 shrink-0 -scale-x-100 text-gold" />
       </p>
     </div>

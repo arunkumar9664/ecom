@@ -37,7 +37,7 @@ export default function WishlistPage() {
   };
 
   return (
-    <main className="mx-auto max-w-[1100px] px-4 py-10 md:px-8">
+    <main className="mx-auto max-w-[1100px] px-gutter py-10">
       <p className="font-body text-xs tracking-[0.16em] text-muted uppercase">Saved</p>
       <h1 className="mt-2 font-heading text-4xl text-ink md:text-5xl">My Wishlist</h1>
       <p className="mt-2 font-body text-sm text-muted">{items.length} {items.length === 1 ? 'piece' : 'pieces'}</p>

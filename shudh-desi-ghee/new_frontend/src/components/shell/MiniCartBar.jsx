@@ -9,7 +9,7 @@ export default function MiniCartBar() {
   if (!cartCount || pathname === '/cart' || pathname === '/checkout') return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-line bg-paper px-4 py-3 md:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-line bg-paper px-gutter py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
       <div className="flex items-center gap-3 text-ink">
         <IconBag className="h-5 w-5" />
         <div className="font-body text-sm leading-tight">

@@ -43,7 +43,7 @@ export default function AccountLayout() {
   };
 
   return (
-    <main className="mx-auto max-w-[1100px] px-4 py-8 md:px-8 md:py-12">
+    <main className="mx-auto max-w-[1100px] px-gutter py-8 md:py-12">
       <header className={home ? '' : 'hidden md:block'}>
         <p className="font-body text-xs tracking-[0.16em] text-muted uppercase">My Account</p>
         <h1 className="mt-2 font-heading text-4xl text-ink md:text-5xl">Hello, {first}</h1>
@@ -55,7 +55,7 @@ export default function AccountLayout() {
       </header>
 
       {!home ? (
-        <div className="sticky top-0 z-20 -mx-4 mb-4 flex items-center gap-3 border-b border-line bg-paper px-4 py-3 md:hidden">
+        <div className="sticky top-0 z-20 -mx-gutter mb-4 flex items-center gap-3 border-b border-line bg-paper px-gutter py-3 md:hidden">
           <button type="button" onClick={() => navigate('/account')} className="flex h-11 w-11 items-center justify-center text-ink" aria-label="Back to account">
             ‹
           </button>

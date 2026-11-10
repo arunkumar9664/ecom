@@ -4,7 +4,7 @@ import { storyImage } from '../../data/homeStories';
 
 export default function OurStory() {
   return (
-    <section className="px-4 py-12 md:px-8">
+    <section className="px-gutter py-12">
       <div className="mx-auto grid max-w-[1360px] items-stretch gap-0 md:grid-cols-2">
         <div className="flex flex-col justify-center border border-line bg-white px-6 py-10 md:px-12">
           <h2 className="font-heading text-4xl text-ink">Our story</h2>

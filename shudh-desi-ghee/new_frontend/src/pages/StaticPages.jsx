@@ -25,14 +25,14 @@ export function StoryPage() {
       <section className="relative flex min-h-[280px] items-end md:min-h-[420px]">
         <SafeImage src={catalogImages.hero1} alt="" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-olive/45" />
-        <div className="relative mx-auto w-full max-w-[1100px] px-4 py-12 text-paper md:px-8">
+        <div className="relative mx-auto w-full max-w-[1100px] px-gutter py-12 text-paper">
           <h1 className="max-w-xl font-heading text-4xl md:text-6xl">{story.headline}</h1>
           <p className="mt-3 max-w-lg font-body text-sm md:text-base">{story.lede}</p>
         </div>
       </section>
       {story.sections.map((section, index) => (
         <Reveal key={section.title}>
-          <section className={`mx-auto grid max-w-[1100px] items-center gap-8 px-4 py-12 md:grid-cols-2 md:px-8 ${index % 2 ? 'md:[&>*:first-child]:order-2' : ''}`}>
+          <section className={`mx-auto grid max-w-[1100px] items-center gap-8 px-gutter py-12 md:grid-cols-2 ${index % 2 ? 'md:[&>*:first-child]:order-2' : ''}`}>
             <SafeImage src={index % 2 ? catalogImages.heroSide1 : catalogImages.heroSide2} alt="" className="aspect-[4/3] w-full object-cover" />
             <div>
               <h2 className="font-heading text-3xl text-ink">{section.title}</h2>
@@ -41,7 +41,7 @@ export function StoryPage() {
           </section>
         </Reveal>
       ))}
-      <section className="bg-sand px-4 py-12 md:px-8">
+      <section className="bg-sand px-gutter py-12">
         <h2 className="text-center font-heading text-3xl text-ink">How it is made</h2>
         <ol className="mx-auto mt-8 grid max-w-[1100px] gap-6 md:grid-cols-4">
           {story.steps.map((step, index) => (
@@ -53,7 +53,7 @@ export function StoryPage() {
           ))}
         </ol>
       </section>
-      <section className="mx-auto grid max-w-[1100px] gap-4 px-4 py-12 sm:grid-cols-2 md:px-8">
+      <section className="mx-auto grid max-w-[1100px] gap-4 px-gutter py-12 sm:grid-cols-2">
         {story.values.map((value) => (
           <article key={value.title} className="rounded-[4px] bg-white p-5 shadow-[0_8px_30px_rgba(43,38,32,0.05)]">
             <h3 className="font-heading text-2xl text-ink">{value.title}</h3>
@@ -84,7 +84,7 @@ export function ContactPage() {
   const whatsapp = storeSettings?.whatsapp || storeSettings?.phone;
   const wa = whatsapp ? (String(whatsapp).startsWith('http') ? whatsapp : `https://wa.me/${String(whatsapp).replace(/\D/g, '')}`) : '';
   return (
-    <main className="mx-auto grid max-w-[1100px] gap-10 px-4 py-12 md:grid-cols-2 md:px-8">
+    <main className="mx-auto grid max-w-[1100px] gap-10 px-gutter py-12 md:grid-cols-2">
       <PageTitle title="Contact" />
       <div>
         <h1 className="font-heading text-4xl text-ink">Contact</h1>
@@ -120,7 +120,7 @@ export function ContactPage() {
 
 function PolicyPage({ policy }) {
   return (
-    <main className="mx-auto grid max-w-[1100px] gap-8 px-4 py-12 md:grid-cols-[200px_minmax(0,65ch)] md:px-8">
+    <main className="mx-auto grid max-w-[1100px] gap-8 px-gutter py-12 md:grid-cols-[200px_minmax(0,65ch)]">
       <PageTitle title={policy.title} />
       <aside className="md:sticky md:top-6 md:self-start">
         <p className="rounded-[3px] bg-sand px-3 py-2 font-body text-xs text-ink">Placeholder. The client’s own text replaces this page.</p>
@@ -170,7 +170,7 @@ export function FaqPage() {
     })).filter((group) => group.items.length);
   }, [query]);
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 md:px-8">
+    <main className="mx-auto max-w-3xl px-gutter py-12">
       <PageTitle title="Questions" />
       <h1 className="font-heading text-4xl text-ink">Questions</h1>
       <label className="mt-6 block font-body text-sm">Search
@@ -209,7 +209,7 @@ const NOTES = [
 
 export function JournalPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 md:px-8">
+    <main className="mx-auto max-w-3xl px-gutter py-12">
       <PageTitle title="Journal" />
       <h1 className="font-heading text-4xl text-ink">Journal</h1>
       <ul className="mt-8 space-y-8">
@@ -229,7 +229,7 @@ export function NotFoundPage() {
   const [query, setQuery] = useState('');
   const { categories } = useShop();
   return (
-    <main className="mx-auto max-w-xl px-4 py-20 text-center">
+    <main className="mx-auto max-w-xl px-gutter py-20 text-center">
       <PageTitle title="Page not found" />
       <p className="font-heading text-7xl text-ink">404</p>
       <p className="mt-3 font-body text-sm text-muted">That address is not in the shop.</p>

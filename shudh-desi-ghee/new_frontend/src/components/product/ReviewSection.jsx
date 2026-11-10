@@ -123,7 +123,7 @@ export default function ReviewSection({ productId, averageRating = 0, reviewCoun
   const average = Number(averageRating) || 0;
 
   return (
-    <section id="reviews" className="scroll-mt-24 px-4 py-14 md:px-8" aria-labelledby="reviews-heading">
+    <section id="reviews" className="scroll-mt-24 px-gutter py-14" aria-labelledby="reviews-heading">
       <h2 id="reviews-heading" className="text-center font-heading text-3xl text-ink md:text-4xl">Reviews</h2>
       {status === 'loading' ? <p className="mt-8 text-center font-body text-sm text-muted">Loading reviews…</p> : null}
       {status === 'error' ? (

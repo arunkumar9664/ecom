@@ -4,7 +4,7 @@ import { journalCards } from '../../data/homeStories';
 
 export default function JournalRow() {
   return (
-    <section className="px-4 py-12 md:px-8" aria-label="Journal">
+    <section className="px-gutter py-12" aria-label="Journal">
       <div className="mb-6 flex items-end justify-between">
         <h2 className="font-heading text-3xl text-ink md:text-4xl">From the journal</h2>
         <Link to="/journal" className="font-body text-sm tracking-[0.12em] text-ink uppercase underline-offset-4 hover:underline">
