@@ -64,7 +64,7 @@ export default function ProductCard({ product }) {
             aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
             aria-pressed={saved}
             onClick={() => toggleWishlist(product.id)}
-            className="flex h-[22px] w-[22px] shrink-0 items-center justify-center text-ink"
+            className="flex h-11 w-11 shrink-0 -mr-2.5 items-center justify-center text-ink"
           >
             <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
               <path d="M12 19s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z" />
@@ -75,7 +75,7 @@ export default function ProductCard({ product }) {
           type="button"
           disabled={product.isSoldOut}
           onClick={() => (needsVariantPicker(product) ? setOpen(true) : addDirect())}
-          className="mt-3 flex h-10 w-full items-center justify-center border border-ink font-body text-[12px] tracking-[0.12em] text-ink uppercase transition-colors hover:bg-ink hover:text-paper disabled:border-line disabled:text-muted md:h-11 md:text-xs md:tracking-[0.14em]"
+          className="mt-3 flex h-11 w-full items-center justify-center border border-ink font-body text-[12px] tracking-[0.12em] text-ink uppercase transition-colors hover:bg-ink hover:text-paper disabled:border-line disabled:text-muted md:text-xs md:tracking-[0.14em]"
         >
           {product.isSoldOut ? 'Sold out' : 'Add to Bag'}
         </button>

@@ -248,9 +248,6 @@ export default function ProductPage() {
             <p className="font-body text-[11px] font-bold tracking-[0.14em] text-ink uppercase">{product.badge}</p>
           ) : null}
           <h1 className="font-heading text-[clamp(28px,2.6vw,40px)] leading-[1.5] font-normal break-words text-ink">{product.name}</h1>
-          {product.description ? (
-            <p className="mt-1 truncate font-body text-sm font-medium text-ink">{product.description}</p>
-          ) : null}
           <p className="mt-4 font-body text-sm text-muted">
             <button
               type="button"

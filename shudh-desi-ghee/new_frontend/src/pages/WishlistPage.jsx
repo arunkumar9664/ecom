@@ -66,7 +66,7 @@ export default function WishlistPage() {
                   type="button"
                   aria-label={`Remove ${product.name}`}
                   onClick={() => toggleWishlist(product.id)}
-                  className="absolute top-2 left-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm hover:bg-white"
+                  className="absolute top-2 left-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink shadow-sm hover:bg-white text-base font-bold"
                 >
                   ×
                 </button>

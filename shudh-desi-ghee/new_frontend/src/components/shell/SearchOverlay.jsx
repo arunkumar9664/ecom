@@ -56,7 +56,7 @@ export default function SearchOverlay() {
             className="h-12 flex-1 bg-transparent font-heading text-lg outline-none"
             aria-label="Search the shop"
           />
-          <button type="button" aria-label="Close search" onClick={close}>
+          <button type="button" aria-label="Close search" onClick={close} className="flex h-11 w-11 items-center justify-center text-ink">
             <IconClose className="h-5 w-5" />
           </button>
         </form>

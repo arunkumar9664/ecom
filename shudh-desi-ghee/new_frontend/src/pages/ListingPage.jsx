@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/home/ProductCard';
 import FilterDrawer from '../components/listing/FilterDrawer';
@@ -34,6 +34,16 @@ export default function ListingPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [queryKey, setQueryKey] = useState('');
+  const sortRef = useRef(null);
+
+  useEffect(() => {
+    if (!sortOpen) return undefined;
+    const onOutside = (e) => {
+      if (!sortRef.current?.contains(e.target)) setSortOpen(false);
+    };
+    document.addEventListener('pointerdown', onOutside);
+    return () => document.removeEventListener('pointerdown', onOutside);
+  }, [sortOpen]);
 
   const search = params.get('search') || '';
   const minPrice = params.get('minPrice') || '';
@@ -172,7 +182,7 @@ export default function ListingPage() {
         <p className="sr-only" aria-live="polite">{status === 'ready' ? `${sorted.length} products` : ''}</p>
       </div>
       <div className="mb-6 flex items-center justify-end gap-6">
-        <div className="relative">
+        <div ref={sortRef} className="relative">
           <button type="button" aria-expanded={sortOpen} onClick={() => setSortOpen((open) => !open)} className="flex items-center gap-2 font-body text-[15px] font-medium tracking-[0.06em] text-terracotta uppercase">
             Sort by
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M8 7h10M6 12h8M10 17h6" /></svg>
@@ -216,9 +226,9 @@ export default function ListingPage() {
 
       <div className="pb-16">
         {status === 'loading' ? (
-          <div className="grid grid-cols-2 gap-[22px] md:grid-cols-3">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="aspect-[3/4] animate-pulse bg-sand motion-reduce:animate-none" />
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="aspect-[16/10] animate-pulse bg-sand motion-reduce:animate-none" />
             ))}
           </div>
         ) : null}
