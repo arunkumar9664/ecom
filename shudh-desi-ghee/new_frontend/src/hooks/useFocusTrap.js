@@ -34,9 +34,11 @@ export default function useFocusTrap(open, nodeRef, onClose) {
     document.addEventListener('keydown', onKey);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.body.dataset.modal = 'open';
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = previousOverflow;
+      delete document.body.dataset.modal;
       previous?.focus?.();
     };
   }, [open, nodeRef]);

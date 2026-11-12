@@ -1,31 +1,24 @@
-import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useShop } from '../../hooks/useShop';
 import { shellNav } from '../../config/nav';
+import useScrollHysteresis from '../../hooks/useScrollHysteresis';
 
 export default function MobileNav() {
   const { categories, sections } = useShop();
   const items = shellNav(categories);
   const { pathname, search } = useLocation();
   const here = `${pathname}${search}`;
-  const [hidden, setHidden] = useState(false);
-
-  useEffect(() => {
-    let last = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (y > last + 8 && y > 48) setHidden(true);
-      else if (y < last - 8) setHidden(false);
-      last = y;
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  const { shown } = useScrollHysteresis({ topThreshold: 80, downThreshold: 24, upThreshold: 12 });
 
   return (
     <nav
       aria-label="Departments"
-      className={`edge-fade overflow-hidden border-b border-line bg-paper transition-[max-height] duration-200 motion-reduce:transition-none min-[1000px]:hidden ${hidden ? 'max-h-0 border-b-0' : 'max-h-11'}`}
+      className={`edge-fade overflow-hidden border-b bg-paper transition-[max-height,opacity,border-color] duration-200 ease-in-out motion-reduce:transition-none min-[1000px]:hidden ${
+        !shown
+          ? 'max-h-0 opacity-0 border-b-transparent pointer-events-none'
+          : 'max-h-11 opacity-100 border-b-line'
+      }`}
+      style={{ willChange: 'max-height, opacity' }}
     >
       <ul className="no-scrollbar flex h-11 items-center gap-0 overflow-x-auto px-gutter">
         {sections.categories.status === 'error' ? (

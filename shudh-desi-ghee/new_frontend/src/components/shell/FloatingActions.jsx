@@ -2,28 +2,16 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useShop } from '../../hooks/useShop';
 import { IconPhone, IconUp } from './icons';
+import useScrollHysteresis from '../../hooks/useScrollHysteresis';
 
 export default function FloatingActions() {
   const { storeSettings, sections, cartCount, isCartOpen, isSearchOpen, isAuthModalOpen, isAccountModalOpen } = useShop();
   const { pathname } = useLocation();
-  const [past, setPast] = useState(false);
-  const [shown, setShown] = useState(true);
+  const { shown, scrollY } = useScrollHysteresis({ topThreshold: 80, downThreshold: 24, upThreshold: 12 });
   const [blocked, setBlocked] = useState(false);
   const [lift, setLift] = useState(false);
   const [keyboard, setKeyboard] = useState(false);
-
-  useEffect(() => {
-    let last = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      setPast(y > 600);
-      if (y > last + 8 && y > 80) setShown(false);
-      else if (y < last - 8) setShown(true);
-      last = y;
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  const past = scrollY > 600;
 
   useEffect(() => {
     const read = () => {
@@ -56,7 +44,7 @@ export default function FloatingActions() {
       : 'bottom-[calc(12px+env(safe-area-inset-bottom))]';
 
   return (
-    <div className={`fixed right-3 z-30 flex flex-col gap-2.5 transition-opacity duration-200 md:right-4 ${bottom} ${covered ? 'pointer-events-none opacity-0' : 'opacity-100'}`}>
+    <div className={`fixed right-3 z-30 flex flex-col gap-2.5 transition-[opacity,bottom] duration-200 ease-out md:right-4 ${bottom} ${covered ? 'pointer-events-none opacity-0' : 'opacity-100'}`}>
       {past ? (
         <button
           type="button"
