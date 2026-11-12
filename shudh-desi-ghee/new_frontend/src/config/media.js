@@ -18,6 +18,35 @@ export const heroFocus = {
   heroMobile2: 'center 40%',
 };
 
+/** Crop focus for Behind the Craft stories (keeps portraits and heads unclipped). */
+export const craftFocus = {
+  cure: 'center 18%',
+  pour: 'center 22%',
+  flax: 'center 18%',
+  stitch: 'center 20%',
+  still: 'center 18%',
+};
+
+/** Category tile image focus overrides to preserve bottle necks and caps. */
+export const categoryFocus = {
+  oils: 'center top',
+  ghee: 'center center',
+  pickles: 'center center',
+  atta: 'center center',
+  breakfast: 'center center',
+  immunity: 'center center',
+};
+
+/** Category tile fit overrides ('contain' ensures bottle necks and jar tops are never sliced off). */
+export const categoryFit = {
+  oils: 'contain',
+  ghee: 'contain',
+  pickles: 'contain',
+  atta: 'contain',
+  breakfast: 'contain',
+  immunity: 'contain',
+};
+
 export const catalogImages = {
   hero1: rosier('web_home_pg1.png?v=1788185972', 1600),
   hero2: rosier('janmashtami_banner_web_1.png?v=1788186000', 1600),

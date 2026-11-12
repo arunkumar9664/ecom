@@ -36,17 +36,17 @@ export default function Header({ menuOpen, onMenu, accountOpen, onAccount }) {
             <IconSearch className="h-6 w-6" />
           </button>
         </div>
-        <Link to="/" className="flex min-w-0 flex-col items-center text-ink" aria-label={brand.name}>
-          <span className="flex max-w-[150px] items-center justify-center gap-1 font-heading text-[clamp(12px,3.4vw,18px)] leading-none whitespace-nowrap min-[1000px]:max-w-none min-[1000px]:gap-2.5 min-[1000px]:text-[34px]">
+        <Link to="/" className="flex min-w-0 max-w-[150px] flex-col items-center justify-center text-center text-ink min-[1000px]:max-w-none" aria-label={brand.name}>
+          <span className="flex items-center justify-center gap-1.5 font-heading text-[17px] leading-none whitespace-nowrap min-[1000px]:gap-2.5 min-[1000px]:text-[32px]">
             Field
             <IconLeaf className="h-3 w-3 shrink-0 text-olive min-[1000px]:h-4 min-[1000px]:w-4" />
             <span className="font-heading text-gold italic">&</span>
             Hearth
           </span>
-          <span className="mt-1.5 hidden items-center gap-2 font-body text-[10px] tracking-[0.32em] text-muted uppercase min-[1000px]:flex">
-            <span className="h-px w-6 bg-gold" aria-hidden="true" />
+          <span className="mt-1 flex items-center justify-center gap-1.5 font-body text-[8px] tracking-[0.24em] text-muted uppercase min-[1000px]:mt-1.5 min-[1000px]:gap-2 min-[1000px]:text-[10px] min-[1000px]:tracking-[0.32em]">
+            <span className="h-px w-3 bg-gold min-[1000px]:w-6" aria-hidden="true" />
             {brand.origin.label}
-            <span className="h-px w-6 bg-gold" aria-hidden="true" />
+            <span className="h-px w-3 bg-gold min-[1000px]:w-6" aria-hidden="true" />
           </span>
         </Link>
         <div className="flex shrink-0 items-center justify-end">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SafeImage from '../SafeImage';
 import { IconChevron } from '../shell/icons';
+import { categoryFocus } from '../../config/media';
 
 export default function CategoryTiles({ categories, status, onRetry }) {
   const items = (Array.isArray(categories) ? categories : []).filter((category) => category?.slug);
@@ -75,7 +76,13 @@ export default function CategoryTiles({ categories, status, onRetry }) {
               draggable={false}
               className="relative h-[120px] w-[120px] shrink-0 flex-none snap-start overflow-hidden rounded-[14px] bg-sand select-none md:h-[150px] md:w-[150px]"
             >
-              <SafeImage src={category.image} alt="" draggable={false} className="h-full w-full object-cover mix-blend-multiply pointer-events-none" />
+              <SafeImage
+                src={category.image}
+                alt=""
+                draggable={false}
+                className="h-full w-full object-contain p-2 mix-blend-multiply pointer-events-none"
+                style={{ objectPosition: categoryFocus[category.slug] || 'center center' }}
+              />
               <span className="absolute inset-0 bg-[linear-gradient(to_top,rgba(43,38,32,0.28),rgba(43,38,32,0.05))] pointer-events-none" aria-hidden="true" />
               <span className="absolute inset-0 flex items-center justify-center px-2 text-center font-body text-[15px] leading-tight font-medium tracking-normal text-white uppercase pointer-events-none md:text-[16px]">
                 <span className="line-clamp-2">{category.name}</span>

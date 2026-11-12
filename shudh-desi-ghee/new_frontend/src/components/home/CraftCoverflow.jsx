@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SafeImage from '../SafeImage';
 import { craftStories } from '../../data/homeStories';
+import { craftFocus } from '../../config/media';
 import { IconChevron } from '../shell/icons';
 import { usePrefersReducedMotion } from '../../hooks/useMediaQuery';
 
@@ -170,7 +171,13 @@ export default function CraftCoverflow() {
               {!centre ? (
                 <button type="button" className="absolute inset-0 z-10" aria-label={`Show ${story.title}`} onClick={() => go(dot)} />
               ) : null}
-              <SafeImage src={story.image} alt="" draggable={false} className="h-full w-full object-cover select-none pointer-events-none" />
+              <SafeImage
+                src={story.image}
+                alt=""
+                draggable={false}
+                className="h-full w-full object-cover select-none pointer-events-none"
+                style={{ objectPosition: craftFocus[story.id] || 'center 20%' }}
+              />
               {centre ? (
                 <>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/45 to-transparent px-6 pt-24 pb-24 text-white">

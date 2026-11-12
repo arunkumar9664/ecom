@@ -66,13 +66,16 @@ export default function ShopTheWorkshop() {
             {items.map((product) => {
               const saved = isInWishlist(product.id);
               return (
-                <article key={product.id} className="relative aspect-[300/550] w-[75vw] max-w-[300px] shrink-0 snap-start overflow-hidden rounded-[14px] min-[1000px]:h-[550px] min-[1000px]:w-[300px] min-[1000px]:aspect-auto">
-                  <Link to={`/product/${product.id}`} className="absolute inset-0" aria-label={product.name} draggable={false}>
-                    <SafeImage src={product.image} alt="" draggable={false} className="h-full w-full object-cover select-none pointer-events-none" />
+                <article key={product.id} className="relative aspect-[300/550] w-[75vw] max-w-[300px] shrink-0 snap-start overflow-hidden rounded-[14px] bg-[#f4ece1] min-[1000px]:h-[550px] min-[1000px]:w-[300px] min-[1000px]:aspect-auto">
+                  <Link to={`/product/${product.id}`} className="absolute inset-0 block overflow-hidden bg-[#f4ece1]" aria-label={product.name} draggable={false}>
+                    <SafeImage src={product.image} alt="" draggable={false} className="absolute inset-0 h-full w-full object-cover blur-xl scale-110 opacity-30 select-none pointer-events-none" />
+                    <div className="relative flex h-full w-full items-center justify-center p-6 pb-28">
+                      <SafeImage src={product.image} alt="" draggable={false} className="max-h-full max-w-full object-contain select-none pointer-events-none drop-shadow-sm" />
+                    </div>
                   </Link>
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4 pt-16 text-white">
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-16 text-white">
                     <p className="font-heading text-2xl leading-tight">{product.name}</p>
-                    <p className="mt-1 font-body text-sm">{formatRupee(product.price)}</p>
+                    <p className="mt-1 font-body text-sm font-semibold">{formatRupee(product.price)}</p>
                   </div>
                   <div className="absolute right-3 bottom-3 z-10 flex gap-2">
                     <button
