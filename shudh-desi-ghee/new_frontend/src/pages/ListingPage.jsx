@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import ListingCard from '../components/listing/ListingCard';
+import ProductCard from '../components/home/ProductCard';
 import FilterDrawer from '../components/listing/FilterDrawer';
 import { useShop } from '../hooks/useShop';
 import useDocumentTitle from '../hooks/useDocumentTitle';
@@ -251,9 +251,9 @@ export default function ListingPage() {
         ) : null}
         {status === 'ready' && shown.length ? (
           <>
-            <div className="grid grid-cols-2 gap-[22px] md:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 items-stretch md:grid-cols-3 md:gap-6">
               {shown.map((product) => (
-                <ListingCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
             {visible < sorted.length ? (

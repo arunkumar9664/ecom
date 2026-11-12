@@ -52,18 +52,83 @@ export default function CraftCoverflow() {
   };
 
   const onPointerDown = (event) => {
-    drag.current = { x: event.clientX, moved: false, active: true };
+    if (event.isPrimary === false || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    drag.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      pointerId: event.pointerId,
+      active: true,
+      captured: false,
+      moved: false,
+    };
   };
+
   const onPointerMove = (event) => {
-    if (!drag.current.active) return;
-    if (Math.abs(event.clientX - drag.current.x) > 8) drag.current.moved = true;
+    const d = drag.current;
+    if (!d.active || d.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - d.startX;
+    const deltaY = event.clientY - d.startY;
+
+    if (!d.captured) {
+      if (Math.abs(deltaX) > 8 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        d.captured = true;
+        d.moved = true;
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        } catch {
+          // pointer capture unsupported or blocked
+        }
+      } else if (Math.abs(deltaY) > 8) {
+        d.active = false;
+        return;
+      }
+    }
+
+    if (d.captured) {
+      d.moved = true;
+    }
   };
-  const onPointerUp = (event) => {
-    if (!drag.current.active) return;
-    const delta = event.clientX - drag.current.x;
-    drag.current.active = false;
-    if (delta > 48) go(index - 1);
-    if (delta < -48) go(index + 1);
+
+  const endDrag = (event) => {
+    const d = drag.current;
+    if (!d.active || d.pointerId !== event.pointerId) return;
+    d.active = false;
+    if (d.captured) {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {
+        // ignore
+      }
+      d.captured = false;
+      const deltaX = event.clientX - d.startX;
+      if (deltaX > 40) {
+        go(indexRef.current - 1);
+      } else if (deltaX < -40) {
+        go(indexRef.current + 1);
+      }
+    }
+  };
+
+  const onPointerCancel = (event) => {
+    const d = drag.current;
+    if (d.captured && d.pointerId != null) {
+      try {
+        event.currentTarget.releasePointerCapture(d.pointerId);
+      } catch {
+        // ignore
+      }
+    }
+    drag.current = { startX: 0, startY: 0, active: false, captured: false, moved: false, pointerId: null };
+  };
+
+  const onClickCapture = (event) => {
+    if (drag.current.moved) {
+      event.preventDefault();
+      event.stopPropagation();
+      window.setTimeout(() => {
+        drag.current.moved = false;
+      }, 60);
+    }
   };
 
   return (
@@ -73,14 +138,17 @@ export default function CraftCoverflow() {
       <div
         ref={stage}
         tabIndex={0}
+        style={{ touchAction: 'pan-y', userSelect: 'none', WebkitUserSelect: 'none' }}
         onKeyDown={(event) => {
           if (event.key === 'ArrowLeft') go(index - 1);
           if (event.key === 'ArrowRight') go(index + 1);
         }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        className="relative mx-auto mt-8 h-[min(148vw,760px)] w-full max-w-[720px] outline-none"
+        onPointerUp={endDrag}
+        onPointerCancel={onPointerCancel}
+        onClickCapture={onClickCapture}
+        className="relative mx-auto mt-8 h-[min(148vw,760px)] w-full max-w-[720px] outline-none select-none"
       >
         {craftStories.map((story, dot) => {
           const delta = dot - index;
@@ -100,16 +168,16 @@ export default function CraftCoverflow() {
               }}
             >
               {!centre ? (
-                <button type="button" className="absolute inset-0 z-10" aria-label={`Show ${story.title}`} onClick={() => { if (!drag.current.moved) go(dot); }} />
+                <button type="button" className="absolute inset-0 z-10" aria-label={`Show ${story.title}`} onClick={() => go(dot)} />
               ) : null}
-              <SafeImage src={story.image} alt="" className="h-full w-full object-cover" />
+              <SafeImage src={story.image} alt="" draggable={false} className="h-full w-full object-cover select-none pointer-events-none" />
               {centre ? (
                 <>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/45 to-transparent px-6 pt-24 pb-24 text-white">
                     <h3 className="font-heading text-[28px] leading-none min-[1000px]:text-[34px]">{story.title}</h3>
                     <p className="mt-3 line-clamp-3 font-body text-[15px] leading-relaxed text-white/90">{story.text}</p>
                   </div>
-                  <Link to="/journal" className="absolute bottom-5 left-1/2 flex h-[42px] w-[min(275px,calc(100%-2.5rem))] -translate-x-1/2 items-center justify-center rounded-[4px] bg-white font-body text-sm font-semibold text-ink shadow-sm">
+                  <Link to="/journal" draggable={false} className="absolute bottom-5 left-1/2 flex h-[42px] w-[min(275px,calc(100%-2.5rem))] -translate-x-1/2 items-center justify-center rounded-[4px] bg-white font-body text-sm font-semibold text-ink shadow-sm">
                     Explore More
                   </Link>
                 </>

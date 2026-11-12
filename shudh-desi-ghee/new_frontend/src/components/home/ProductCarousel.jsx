@@ -2,14 +2,13 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from './ProductCard';
 import { IconChevron } from '../shell/icons';
-import useStripScroll from '../../hooks/useStripScroll';
 
 function Skeleton() {
   return (
-    <div className="flex gap-4 overflow-hidden">
+    <div className="no-scrollbar flex gap-4 overflow-hidden -mx-gutter px-gutter md:mx-0 md:px-0">
       {Array.from({ length: 3 }).map((_, index) => (
         <div key={index} className="w-[72%] shrink-0 md:w-[calc((100%-2rem)/3)]">
-          <div className="aspect-[3/4] w-full animate-pulse bg-sand motion-reduce:animate-none" />
+          <div className="aspect-[16/10] w-full animate-pulse bg-sand motion-reduce:animate-none" />
           <div className="mt-4 h-5 w-2/3 animate-pulse bg-sand motion-reduce:animate-none" />
           <div className="mt-2 h-4 w-full animate-pulse bg-sand motion-reduce:animate-none" />
         </div>
@@ -20,13 +19,12 @@ function Skeleton() {
 
 export default function ProductCarousel({ title, products, href, status, onRetry, label }) {
   const scroller = useRef(null);
-  const swallowClick = useStripScroll(scroller);
   const items = Array.isArray(products) ? products : [];
 
   const scrollByCard = (direction) => {
     const node = scroller.current;
     if (!node) return;
-    const amount = node.clientWidth * 0.8 * direction;
+    const amount = node.clientWidth * 0.75 * direction;
     node.scrollBy({ left: amount, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   };
 
@@ -59,9 +57,12 @@ export default function ProductCarousel({ title, products, href, status, onRetry
               <IconChevron className="h-4 w-4 rotate-180" />
             </button>
           ) : null}
-          <div ref={scroller} onClickCapture={swallowClick} className="flex snap-x snap-proximity gap-4 overflow-x-auto overscroll-x-contain pb-2">
+          <div
+            ref={scroller}
+            className="no-scrollbar flex snap-x snap-proximity gap-4 overflow-x-auto overscroll-x-contain pb-2 scroll-touch -mx-gutter px-gutter scroll-px-gutter md:mx-0 md:px-0 md:scroll-px-0"
+          >
             {items.map((product) => (
-              <div key={product.id} className="w-[70%] shrink-0 snap-start min-[1000px]:w-[calc((100%-2rem)/3)]">
+              <div key={product.id} className="flex w-[72%] shrink-0 snap-start sm:w-[55%] md:w-[calc((100%-2rem)/3)]">
                 <ProductCard product={product} />
               </div>
             ))}
@@ -73,7 +74,6 @@ export default function ProductCarousel({ title, products, href, status, onRetry
           ) : null}
         </div>
       ) : null}
-
     </section>
   );
 }

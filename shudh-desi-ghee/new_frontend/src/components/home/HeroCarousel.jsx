@@ -98,7 +98,7 @@ export default function HeroCarousel({ slides, status, onRetry }) {
     <section aria-roledescription="carousel" aria-label="Featured" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       <div
         ref={scroller}
-        className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain md:hidden"
+        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-touch md:hidden"
         onTouchStart={() => setPaused(true)}
         onTouchEnd={() => setPaused(false)}
         onScroll={(event) => {
@@ -113,7 +113,7 @@ export default function HeroCarousel({ slides, status, onRetry }) {
         {items.map((slide, dot) => {
           const image = mobileFrame[slide.image] || slide.image;
           return (
-            <article key={slide.id || dot} className="w-full shrink-0 snap-center snap-always bg-paper">
+            <article key={slide.id || dot} className="w-full shrink-0 flex-none snap-center snap-always bg-paper">
               <div className="aspect-[4/5] overflow-hidden">
                 <SafeImage src={image} alt="" priority={dot === 0} draggable={false} className="h-full w-full object-cover" style={{ objectPosition: focusFor(image) }} />
               </div>

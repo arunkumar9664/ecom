@@ -161,11 +161,11 @@ export default function CartPanel({ onClose, page = false }) {
                     </button>
                   </div>
                 </div>
-                <div ref={scroller} className="no-scrollbar mt-3 flex gap-3 overflow-x-auto">
+                <div ref={scroller} className="no-scrollbar mt-3 flex snap-x snap-proximity gap-3 overflow-x-auto overscroll-x-contain pb-1 scroll-touch">
                   {related.map((product) => (
-                    <article key={product.id} className="w-28 shrink-0">
-                      <Link to={`/product/${product.id}`} onClick={onClose}>
-                        <SafeImage src={product.image} alt={product.name} className="aspect-square w-full bg-sand object-contain" />
+                    <article key={product.id} className="w-28 shrink-0 flex-none snap-start">
+                      <Link to={`/product/${product.id}`} onClick={onClose} draggable={false}>
+                        <SafeImage src={product.image} alt={product.name} draggable={false} className="aspect-square w-full bg-sand object-contain select-none pointer-events-none" />
                       </Link>
                       <p className="mt-2 line-clamp-2 font-body text-xs text-ink">{product.name}</p>
                       <p className="font-body text-xs font-bold">{formatRupee(product.price)}</p>

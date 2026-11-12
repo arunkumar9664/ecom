@@ -100,6 +100,29 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll-px-gutter {
+  scroll-padding-left: 16px;
+  scroll-padding-right: 16px;
+}
+
+@media (min-width: 481px) {
+  .scroll-px-gutter {
+    scroll-padding-left: 20px;
+    scroll-padding-right: 20px;
+  }
+}
+
+@media (min-width: 769px) {
+  .scroll-px-gutter {
+    scroll-padding-left: 32px;
+    scroll-padding-right: 32px;
+  }
+}
+
 h1, h2, h3 {
   text-wrap: balance;
 }
